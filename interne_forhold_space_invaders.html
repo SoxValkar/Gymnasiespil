@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interne forhold – Space Invaders</title>
+<style>
+  :root{
+    --bg1:#07111f;
+    --bg2:#0d1b2a;
+    --panel:rgba(10,24,40,.88);
+    --line:rgba(132,220,255,.22);
+    --text:#eef8ff;
+    --muted:#9ec8dd;
+    --accent:#70e7ff;
+    --good:#82ffb6;
+    --bad:#ff768c;
+    --gold:#ffd76a;
+  }
+
+  *{box-sizing:border-box}
+  html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:
+      radial-gradient(circle at 50% 115%, #173b59 0%, transparent 42%),
+      linear-gradient(180deg,var(--bg1),var(--bg2));
+    color:var(--text);
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    user-select:none;
+  }
+
+  #wrap{
+    position:relative;
+    width:100%;
+    height:100%;
+  }
+
+  canvas{
+    display:block;
+    width:100%;
+    height:100%;
+    cursor:crosshair;
+  }
+
+  #hud{
+    position:absolute;
+    top:14px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:10px;
+    z-index:5;
+    pointer-events:none;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+
+  .pill{
+    background:rgba(5,18,31,.78);
+    border:1px solid rgba(112,231,255,.28);
+    box-shadow:0 8px 30px rgba(0,0,0,.22);
+    backdrop-filter:blur(8px);
+    border-radius:999px;
+    padding:8px 13px;
+    font-size:14px;
+    letter-spacing:.2px;
+    white-space:nowrap;
+  }
+
+  .pill b{color:var(--accent)}
+  #message{
+    position:absolute;
+    inset:0;
+    display:grid;
+    place-items:center;
+    z-index:10;
+    background:rgba(2,9,17,.42);
+    backdrop-filter:blur(5px);
+  }
+
+  #card{
+    width:min(620px,calc(100% - 36px));
+    background:linear-gradient(180deg,rgba(12,30,49,.96),rgba(5,18,31,.96));
+    border:1px solid rgba(112,231,255,.28);
+    box-shadow:0 30px 90px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.05);
+    border-radius:24px;
+    padding:30px;
+    text-align:center;
+  }
+
+  h1{
+    margin:0 0 10px;
+    font-size:clamp(26px,4vw,44px);
+    line-height:1.05;
+    letter-spacing:-1px;
+  }
+
+  #card p{
+    margin:10px auto;
+    max-width:520px;
+    color:#b9d8e7;
+    line-height:1.5;
+  }
+
+  .rules{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:10px;
+    margin:22px 0;
+  }
+
+  .rule{
+    border-radius:16px;
+    padding:14px 10px;
+    background:rgba(255,255,255,.035);
+    border:1px solid rgba(255,255,255,.07);
+    font-size:13px;
+    line-height:1.4;
+    color:#cce3ee;
+  }
+
+  .rule strong{
+    display:block;
+    font-size:20px;
+    margin-bottom:3px;
+  }
+
+  button{
+    appearance:none;
+    border:0;
+    border-radius:999px;
+    padding:13px 22px;
+    font-weight:800;
+    font-size:15px;
+    color:#04131f;
+    background:linear-gradient(180deg,#8cf0ff,#55d9f1);
+    box-shadow:0 10px 28px rgba(72,212,238,.24);
+    cursor:pointer;
+    transition:.15s ease;
+  }
+
+  button:hover{transform:translateY(-1px) scale(1.02)}
+  button:active{transform:translateY(1px) scale(.99)}
+
+  #small{
+    margin-top:13px!important;
+    font-size:12px;
+    color:#80a9bc!important;
+  }
+
+  #flash{
+    position:absolute;
+    left:50%;
+    top:70px;
+    transform:translateX(-50%);
+    z-index:6;
+    font-size:18px;
+    font-weight:900;
+    opacity:0;
+    pointer-events:none;
+    text-shadow:0 2px 18px rgba(0,0,0,.55);
+  }
+
+  @media(max-width:620px){
+    .rules{grid-template-columns:1fr}
+    #card{padding:24px 18px}
+    #hud{top:8px;width:95%}
+    .pill{font-size:12px;padding:7px 10px}
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game"></canvas>
+
+  <div id="hud">
+    <div class="pill">Point: <b id="score">0</b></div>
+    <div class="pill">Hastighed: <b id="speed">1</b></div>
+    <div class="pill">Rekord: <b id="high">0</b></div>
+  </div>
+
+  <div id="flash"></div>
+
+  <div id="message">
+    <div id="card">
+      <h1>Interne forhold</h1>
+      <p>Skyd kun fagbegreberne. Klik med musen for at skyde lodret op fra rumskibet.</p>
+      <div class="rules">
+        <div class="rule"><strong style="color:var(--good)">+1</strong>Ram et fagbegreb</div>
+        <div class="rule"><strong style="color:var(--bad)">−1</strong>Ram et hverdagsord</div>
+        <div class="rule"><strong style="color:var(--bad)">−1</strong>Lad et fagbegreb slippe igennem</div>
+      </div>
+      <button id="startBtn">Start spillet</button>
+      <p id="small">For hvert 5. point stiger tempoet.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const terms = [
+    "Den interne situation",
+    "Virksomhedskarakteristik",
+    "Konkurrencebegreber",
+    "Kernekompetence",
+    "Konkurrencemæssig fordel",
+    "Kritiske succesfaktorer (KSF)",
+    "Key Performance Indicators (KPI)",
+    "Forretningsmodeller",
+    "Aktivitetsperspektiv",
+    "Produkt/serviceydelse",
+    "Kundeperspektiv",
+    "Finansielt perspektiv",
+    "Disruption",
+    "Business Model Canvas",
+    "Værditilbud",
+    "Kundesegmenter",
+    "Kunderelationer",
+    "Kanaler",
+    "Nøgleaktiviteter",
+    "Nøgleresurser",
+    "Samarbejdspartnere",
+    "Leverandører",
+    "Omkostninger",
+    "Indtægter",
+    "Værdikæde",
+    "Upstream",
+    "Downstream",
+    "Margin",
+    "SW-opsamling"
+  ];
+
+  const everydayWords = [
+    "cykel", "banan", "sofapude", "tandbørste", "regnjakke", "kat",
+    "kaffekop", "fortov", "skrivebord", "fodbold", "madpakke", "paraply",
+    "vindue", "blyant", "sokker", "køleskab", "fjernbetjening", "rugbrød",
+    "vaskemaskine", "hovedpude", "busstoppested", "solbriller", "nøglebundt",
+    "vandflaske", "hundesnor", "morgenmad", "græsplæne", "stearinlys",
+    "håndklæde", "bogreol", "mobiloplader", "dørmåtte", "løbesko",
+    "snebold", "postkasse", "æble", "strandtaske", "lampe", "regnvejr",
+    "gaffel", "gryde", "skraldespand", "cykelhjelm", "dyne", "tomat",
+    "trappe", "havebord", "iskage", "papirclips", "hårbørste"
+  ];
+
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const scoreEl = document.getElementById("score");
+  const speedEl = document.getElementById("speed");
+  const highEl = document.getElementById("high");
+  const overlay = document.getElementById("message");
+  const card = document.getElementById("card");
+  const startBtn = document.getElementById("startBtn");
+  const flash = document.getElementById("flash");
+
+  let W = innerWidth, H = innerHeight, dpr = Math.min(devicePixelRatio || 1, 2);
+  let playing = false;
+  let score = 0;
+  let highScore = Number(localStorage.getItem("interneForholdHigh") || 0);
+  let level = 1;
+  let lastThreshold = 0;
+  let spawnTimer = 0;
+  let stars = [];
+  let words = [];
+  let bullets = [];
+  let particles = [];
+  let lastTime = performance.now();
+
+  const ship = { x: W / 2, y: H - 62, w: 42, h: 34 };
+
+  function resize() {
+    W = innerWidth;
+    H = innerHeight;
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ship.x = Math.min(Math.max(ship.x, 30), W - 30);
+    ship.y = H - 60;
+    makeStars();
+  }
+
+  function makeStars() {
+    const count = Math.max(60, Math.floor((W * H) / 14000));
+    stars = Array.from({length: count}, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.5 + .25,
+      a: Math.random() * .75 + .15,
+      s: Math.random() * 13 + 5
+    }));
+  }
+
+  function resetGame() {
+    score = 0;
+    level = 1;
+    lastThreshold = 0;
+    spawnTimer = 0;
+    words = [];
+    bullets = [];
+    particles = [];
+    ship.x = W / 2;
+    scoreEl.textContent = score;
+    speedEl.textContent = level;
+    highEl.textContent = highScore;
+  }
+
+  function startGame() {
+    resetGame();
+    playing = true;
+    overlay.style.display = "none";
+  }
+
+  function showEnd() {
+    playing = false;
+    if (score > highScore) {
+      highScore = score;
+      localStorage.setItem("interneForholdHigh", highScore);
+      highEl.textContent = highScore;
+    }
+
+    card.innerHTML = `
+      <h1>Runden er slut</h1>
+      <p>Du fik <strong style="color:#70e7ff;font-size:28px">${score}</strong> point.</p>
+      <div class="rules">
+        <div class="rule"><strong style="color:#82ffb6">+1</strong>Fagbegreb ramt</div>
+        <div class="rule"><strong style="color:#ff768c">−1</strong>Hverdagsord ramt</div>
+        <div class="rule"><strong style="color:#ffd76a">${level}</strong>Sluthastighed</div>
+      </div>
+      <button id="againBtn">Prøv igen</button>
+      <p id="small">Skyd kun de faglige ord fra kapitlet.</p>
+    `;
+    overlay.style.display = "grid";
+    document.getElementById("againBtn").addEventListener("click", startGame);
+  }
+
+  function flashText(text, good = true) {
+    flash.textContent = text;
+    flash.style.color = good ? "#82ffb6" : "#ff768c";
+    flash.animate(
+      [
+        {opacity:0, transform:"translate(-50%,8px) scale(.9)"},
+        {opacity:1, transform:"translate(-50%,0) scale(1.08)", offset:.22},
+        {opacity:1, transform:"translate(-50%,0) scale(1)", offset:.7},
+        {opacity:0, transform:"translate(-50%,-10px) scale(.96)"}
+      ],
+      {duration:850, easing:"ease-out"}
+    );
+  }
+
+  function changeScore(delta) {
+    score += delta;
+    scoreEl.textContent = score;
+
+    if (score > highScore) {
+      highScore = score;
+      highEl.textContent = highScore;
+    }
+
+    const threshold = Math.floor(Math.max(0, score) / 5) * 5;
+    if (threshold >= 5 && threshold > lastThreshold) {
+      lastThreshold = threshold;
+      level++;
+      speedEl.textContent = level;
+      flashText("HASTIGHED +" + 1, true);
+    }
+  }
+
+  function spawnWord() {
+    const isTerm = Math.random() < 0.5;
+    const pool = isTerm ? terms : everydayWords;
+    const text = pool[Math.floor(Math.random() * pool.length)];
+
+    const baseFont = W < 700 ? 13 : 15;
+    ctx.font = `700 ${baseFont}px Inter, Arial`;
+    const textWidth = ctx.measureText(text).width;
+    const pad = 13;
+    const maxX = Math.max(20, W - textWidth - pad * 2 - 20);
+
+    words.push({
+      text,
+      isTerm,
+      x: 20 + Math.random() * Math.max(1, maxX - 20),
+      y: -40,
+      w: textWidth + pad * 2,
+      h: 32,
+      font: baseFont,
+      speed: 46 + level * 10 + Math.random() * 8
+    });
+  }
+
+  function shoot() {
+    if (!playing) return;
+    bullets.push({
+      x: ship.x,
+      y: ship.y - ship.h / 2,
+      vy: -720,
+      r: 3.2
+    });
+  }
+
+  function burst(x, y, good) {
+    for (let i = 0; i < 12; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const s = 50 + Math.random() * 120;
+      particles.push({
+        x, y,
+        vx: Math.cos(a) * s,
+        vy: Math.sin(a) * s,
+        life: .45 + Math.random() * .25,
+        max: .7,
+        good
+      });
+    }
+  }
+
+  function update(dt) {
+    for (const s of stars) {
+      s.y += s.s * dt * (1 + level * .035);
+      if (s.y > H) {
+        s.y = -2;
+        s.x = Math.random() * W;
+      }
+    }
+
+    if (!playing) return;
+
+    spawnTimer -= dt;
+    const spawnEvery = Math.max(.52, 1.16 - level * .055);
+    if (spawnTimer <= 0) {
+      spawnWord();
+      spawnTimer = spawnEvery;
+    }
+
+    for (let i = bullets.length - 1; i >= 0; i--) {
+      bullets[i].y += bullets[i].vy * dt;
+      if (bullets[i].y < -20) bullets.splice(i, 1);
+    }
+
+    for (let i = words.length - 1; i >= 0; i--) {
+      const w = words[i];
+      w.y += w.speed * dt;
+
+      if (w.y - w.h / 2 > H) {
+        if (w.isTerm) {
+          changeScore(-1);
+          flashText("−1  Fagbegreb slap igennem", false);
+        }
+        words.splice(i, 1);
+        continue;
+      }
+
+      let hit = false;
+      for (let j = bullets.length - 1; j >= 0; j--) {
+        const b = bullets[j];
+        if (
+          b.x >= w.x &&
+          b.x <= w.x + w.w &&
+          b.y >= w.y - w.h / 2 &&
+          b.y <= w.y + w.h / 2
+        ) {
+          bullets.splice(j, 1);
+          if (w.isTerm) {
+            changeScore(1);
+            flashText("+1  Fagbegreb", true);
+            burst(w.x + w.w / 2, w.y, true);
+          } else {
+            changeScore(-1);
+            flashText("−1  Hverdagsord", false);
+            burst(w.x + w.w / 2, w.y, false);
+          }
+          words.splice(i, 1);
+          hit = true;
+          break;
+        }
+      }
+      if (hit) continue;
+    }
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vx *= .985;
+      p.vy *= .985;
+      p.life -= dt;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+  }
+
+  function drawBackground() {
+    ctx.clearRect(0, 0, W, H);
+
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#06101c");
+    g.addColorStop(1, "#0c2033");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    for (const s of stars) {
+      ctx.globalAlpha = s.a;
+      ctx.fillStyle = "#d8f5ff";
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    const glow = ctx.createRadialGradient(W / 2, H + 40, 10, W / 2, H + 40, Math.min(W, H) * .75);
+    glow.addColorStop(0, "rgba(59,153,204,.20)");
+    glow.addColorStop(1, "rgba(59,153,204,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.strokeStyle = "rgba(112,231,255,.10)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, H - 22);
+    ctx.lineTo(W, H - 22);
+    ctx.stroke();
+  }
+
+  function roundRect(x, y, w, h, r) {
+    const rr = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+  }
+
+  function drawWords() {
+    for (const w of words) {
+      const x = w.x;
+      const y = w.y - w.h / 2;
+
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = "rgba(0,0,0,.35)";
+      ctx.fillStyle = "rgba(8,22,36,.93)";
+      roundRect(x, y, w.w, w.h, 9);
+      ctx.fill();
+
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "rgba(173,227,247,.20)";
+      ctx.lineWidth = 1;
+      roundRect(x, y, w.w, w.h, 9);
+      ctx.stroke();
+
+      ctx.font = `700 ${w.font}px Inter, Arial`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#edf9ff";
+      ctx.fillText(w.text, x + w.w / 2, w.y + .5);
+    }
+  }
+
+  function drawBullets() {
+    for (const b of bullets) {
+      const grad = ctx.createLinearGradient(b.x, b.y + 15, b.x, b.y - 15);
+      grad.addColorStop(0, "rgba(112,231,255,0)");
+      grad.addColorStop(1, "rgba(112,231,255,1)");
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(b.x, b.y + 13);
+      ctx.lineTo(b.x, b.y - 8);
+      ctx.stroke();
+
+      ctx.fillStyle = "#e8fcff";
+      ctx.shadowBlur = 14;
+      ctx.shadowColor = "#70e7ff";
+      ctx.beginPath();
+      ctx.arc(b.x, b.y - 8, b.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  function drawShip() {
+    const x = ship.x, y = ship.y;
+
+    const thrust = ctx.createLinearGradient(x, y + 12, x, y + 40);
+    thrust.addColorStop(0, "rgba(112,231,255,.9)");
+    thrust.addColorStop(1, "rgba(112,231,255,0)");
+    ctx.fillStyle = thrust;
+    ctx.beginPath();
+    ctx.moveTo(x - 8, y + 12);
+    ctx.lineTo(x + 8, y + 12);
+    ctx.lineTo(x, y + 38 + Math.sin(performance.now() / 70) * 5);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.shadowBlur = 26;
+    ctx.shadowColor = "rgba(112,231,255,.55)";
+
+    const body = ctx.createLinearGradient(x - 25, y, x + 25, y);
+    body.addColorStop(0, "#6193a8");
+    body.addColorStop(.5, "#e7f7ff");
+    body.addColorStop(1, "#6193a8");
+    ctx.fillStyle = body;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y - 24);
+    ctx.lineTo(x + 24, y + 16);
+    ctx.lineTo(x + 9, y + 12);
+    ctx.lineTo(x, y + 17);
+    ctx.lineTo(x - 9, y + 12);
+    ctx.lineTo(x - 24, y + 16);
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = "#153347";
+    ctx.beginPath();
+    ctx.ellipse(x, y - 5, 7, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#76eaff";
+    ctx.globalAlpha = .9;
+    ctx.beginPath();
+    ctx.ellipse(x, y - 7, 4, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  function drawParticles() {
+    for (const p of particles) {
+      ctx.globalAlpha = Math.max(0, p.life / p.max);
+      ctx.fillStyle = p.good ? "#82ffb6" : "#ff768c";
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function draw() {
+    drawBackground();
+    drawWords();
+    drawBullets();
+    drawParticles();
+    drawShip();
+
+    if (playing) {
+      ctx.font = "600 12px Inter, Arial";
+      ctx.fillStyle = "rgba(182,221,238,.65)";
+      ctx.textAlign = "center";
+      ctx.fillText("Klik for at skyde", W / 2, H - 10);
+    }
+  }
+
+  function loop(now) {
+    const dt = Math.min((now - lastTime) / 1000, .035);
+    lastTime = now;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  canvas.addEventListener("mousemove", e => {
+    const rect = canvas.getBoundingClientRect();
+    ship.x = Math.max(28, Math.min(W - 28, e.clientX - rect.left));
+  });
+
+  canvas.addEventListener("click", shoot);
+
+  canvas.addEventListener("touchmove", e => {
+    if (!playing) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    ship.x = Math.max(28, Math.min(W - 28, t.clientX - rect.left));
+  }, {passive:false});
+
+  canvas.addEventListener("touchstart", e => {
+    if (!playing) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    ship.x = Math.max(28, Math.min(W - 28, t.clientX - rect.left));
+    shoot();
+  }, {passive:false});
+
+  startBtn.addEventListener("click", startGame);
+  addEventListener("resize", resize);
+
+  highEl.textContent = highScore;
+  resize();
+  requestAnimationFrame(loop);
+
+  // Afslut automatisk efter lang spilletid, så runderne forbliver overskuelige.
+  setInterval(() => {
+    if (playing && words.length > 22) showEnd();
+  }, 1000);
+})();
+</script>
+</body>
+</html>
