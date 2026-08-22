@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gymnasiespil – faglige spil til undervisningen</title>
+<meta name="description" content="Gratis browserbaserede faglige spil og prompts til gymnasieundervisningen.">
+<style>
+:root{--bg:#08111f;--panel:#101c2d;--panel2:#15243a;--text:#f5f7fb;--muted:#aebbd0;--accent:#74a7ff;--good:#66e3ae;--line:#263a57}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1626 45%,#07101d);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}
+a{color:inherit}.wrap{width:min(1080px,calc(100% - 32px));margin:auto}header{padding:24px 0;display:flex;justify-content:space-between;align-items:center}.brand{font-weight:900;letter-spacing:.04em}nav a{color:var(--muted);text-decoration:none;margin-left:20px}
+.hero{padding:78px 0 72px;text-align:center}.eyebrow{color:#8db6ff;font-weight:800;text-transform:uppercase;letter-spacing:.13em;font-size:.78rem}h1{font-size:clamp(2.5rem,7vw,5.2rem);line-height:.98;margin:14px auto 20px;max-width:900px;letter-spacing:-.045em}.lead{max-width:700px;margin:auto;color:var(--muted);font-size:1.12rem}.cta{display:inline-block;margin-top:28px;background:var(--accent);color:#07101d;text-decoration:none;font-weight:900;padding:13px 20px;border-radius:12px}
+section{padding:62px 0}h2{font-size:clamp(1.8rem,4vw,2.6rem);margin:0 0 10px}.intro{color:var(--muted);margin:0 0 28px;max-width:680px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:22px;padding:26px;box-shadow:0 18px 50px #0003}.tag{font-size:.75rem;color:#9ebdff;text-transform:uppercase;letter-spacing:.1em;font-weight:800}.card h3{font-size:1.55rem;margin:8px 0}.card p{color:var(--muted)}.buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}button,.button{border:0;border-radius:11px;padding:12px 15px;font:inherit;font-weight:850;cursor:pointer;text-decoration:none;background:var(--accent);color:#07101d}button.secondary{background:#20334f;color:#eaf1ff;border:1px solid #355274}.prompt{display:none;margin-top:18px;background:#07111e;border:1px solid var(--line);border-radius:14px;padding:16px;white-space:pre-wrap;color:#d7e1ef;font-size:.88rem;max-height:330px;overflow:auto}.prompt.show{display:block}.about{display:grid;grid-template-columns:190px 1fr;gap:32px;align-items:center;background:linear-gradient(135deg,#12213a,#0e1929);border:1px solid var(--line);border-radius:26px;padding:32px}.portrait{width:180px;height:180px;border-radius:50%;object-fit:cover;object-position:50% 28%;border:4px solid #ffffff18}.about p{color:var(--muted)}.tiktok{display:inline-block;margin-top:8px;color:#fff;font-weight:850}footer{padding:35px 0 45px;color:#71829b;text-align:center;font-size:.85rem;border-top:1px solid #17263a}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:#e9fff6;color:#082118;padding:10px 16px;border-radius:10px;font-weight:800;opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:720px){nav{display:none}.hero{padding:52px 0}.grid{grid-template-columns:1fr}.about{grid-template-columns:1fr;text-align:center}.portrait{margin:auto}section{padding:44px 0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="brand">GYMNASIESPIL</div><nav><a href="#spil">Spil</a><a href="#om">Om Mark</a></nav></header>
+<main>
+<section class="hero">
+<div class="eyebrow">Gratis spil til gymnasiet</div>
+<h1>Faglig træning, der føles som et spil.</h1>
+<p class="lead">Browserbaserede undervisningsspil og prompts, som kan bruges direkte eller tilpasses til dit eget fag.</p>
+<a class="cta" href="#spil">Se spillene</a>
+</section>
+
+<section id="spil">
+<h2>Spil</h2>
+<p class="intro">Spillene kører direkte i browseren. Under hvert spil kan du også se og kopiere den prompt, der ligger bag idéen.</p>
+<div class="grid">
+<article class="card">
+<div class="tag">Matematik · Fagbegreber</div>
+<h3>Concept Detective</h3>
+<p>Gæt det korrekte fagbegreb ud fra op til tre ledetråde. Jo tidligere du gætter rigtigt, desto flere point.</p>
+<div class="buttons">
+<a class="button" href="spil/concept-detective/index.html">Spil nu</a>
+<button class="secondary" onclick="togglePrompt('p1',this)">Se prompt</button>
+<button class="secondary" onclick="copyPrompt('p1')">Kopiér prompt</button>
+</div>
+<div class="prompt" id="p1">Du skal lave et prompt til et computerspil, skrevet i .HTML. Computerspillet skal bygge på informationer fra bekendtgørelsen til det fag som angives i promptet. Brug matematik som eksempel. Men ved at ændre et enkelt ord, kan spillet bruges i andre fag på gymnasiet, fra sprogfag til økonomiske og naturvidenskabelige fag.
+
+Spillet skal omhandle definitioner, og lære eleven hvad de forskellige fagbegreber betyder, og gennem 3 ledetråde skal spilleren, som er gymnasieelev, gætte den korrekte definition, og modtager point efter hvor få ledetråde de skal bruge. Ligesom musikquiz spil.
+
+Målgruppen er gymnasieelever fra 16-20 år, og antallet af spørgsmål skal kunne udvides uendeligt.</div>
+</article>
+
+<article class="card">
+<div class="tag">Afsætning · Interne forhold</div>
+<h3>Interne forhold: Space Invaders</h3>
+<p>Styr rumskibet og skyd fagbegreberne, men undgå hverdagsordene. Tempoet stiger, når scoren gør.</p>
+<div class="buttons">
+<a class="button" href="spil/interne-forhold/index.html">Spil nu</a>
+<button class="secondary" onclick="togglePrompt('p2',this)">Se prompt</button>
+<button class="secondary" onclick="copyPrompt('p2')">Kopiér prompt</button>
+</div>
+<div class="prompt" id="p2">Jeg har en liste af fagbegreber fra kapitel 2 i Marketing bogen fra Systime, som skal læres angående emnet &quot;Interne forhold&quot;. De kommer nederst.
+
+Du skal programmere et spil, som er følgende:
+
+Man styrer et lille rumskib som er nederst på skærmen. Når man klikker med musen, skyder den opad. Tag inspiration fra spillet &quot;Space Invaders&quot;. Fra toppen af skærmen kommer en række ord. Ordene falder nedad med fast hastighed. Halvdelen af ordene skal være fra listen herunder, den anden halvdel skal være hverdagsord og ikke fagbegreber. De ord skal du selv finde, og de må ikke minde om fagbegreberne.
+
+Hver gang man skyder et fagbegreb får man et point, hver gang man skyder et hverdagsord får man et minuspoint. Hvis et fagbegreb rammer bunden, får man også et minuspoint. Hver gang man rammer et pointtal fra 5-tabellen, så 5, 10, 15, osv., stiger hastigheden og ordene falder hurtigere.
+
+Spillet skal programmeres som .html, så jeg kan udlevere det til mine elever. Der skal ikke være dokumentation eller andet, bare spillet. Det skal være simpelt, men grafisk må du gerne gøre det lidt lækkert, så spillerne har lyst til at prøve det igen.
+
+Listen over fagbegreber er her:
+Den interne situation
+Virksomhedskarakteristik
+Konkurrencebegreber
+Kernekompetence
+Konkurrencemæssig fordel
+Kritiske succesfaktorer (KSF)
+Key Performance Indicators (KPI)
+Forretningsmodeller
+Aktivitetsperspektiv
+Produkt/serviceydelse
+Kundeperspektiv
+Finansielt perspektiv
+Disruption
+Business Model Canvas
+Værditilbud
+Kundesegmenter
+Kunderelationer
+Kanaler
+Nøgleaktiviteter
+Nøgleresurser
+Samarbejdspartnere, fx leverandører
+Omkostninger
+Indtægter
+Værdikæde
+Upstream
+Downstream
+Margin
+SW-opsamling</div>
+</article>
+</div>
+</section>
+
+<section id="om">
+<div class="about">
+<img class="portrait" src="mark-jonsson.jpg" alt="Mark Jønsson">
+<div>
+<div class="tag">Om Mark</div>
+<h2>Mark Jønsson</h2>
+<p>Jeg underviser i Afsætning og Innovation på UCH-HHX og har 12 års erfaring som underviser. Her samler jeg faglige computerspil og prompts, som kan bruges til at gøre undervisningen mere interaktiv.</p>
+<p>På TikTok deler jeg idéer, spil og inspiration til undervisningen som <strong>Marketing-Mark</strong>.</p>
+<a class="tiktok" href="https://www.tiktok.com/@markjnsson" target="_blank" rel="noopener">Se Marketing-Mark på TikTok →</a>
+</div>
+</div>
+</section>
+</main>
+<footer>Gymnasiespil · Faglige spil til undervisningen</footer>
+</div>
+<div class="toast" id="toast">Prompt kopieret</div>
+<script>
+function togglePrompt(id,btn){const el=document.getElementById(id);el.classList.toggle('show');btn.textContent=el.classList.contains('show')?'Skjul prompt':'Se prompt';}
+async function copyPrompt(id){const text=document.getElementById(id).innerText;await navigator.clipboard.writeText(text);const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600);}
+</script>
+</body>
+</html>
