@@ -102,7 +102,42 @@ SW-opsamling</div>
 <p>Træf 10 ledelsesbeslutninger og se direkte, hvordan de påvirker virksomhedens resultatopgørelse. Vælg mellem handels- og produktionsvirksomhed og jagt den bedst mulige bundlinje.</p>
 <div class="buttons">
 <a class="button" href="spil/bundlinjen/index.html" target="_blank" rel="noopener">Spil nu</a>
+<button class="secondary" onclick="togglePrompt('p3',this)">Se prompt</button>
+<button class="secondary" onclick="copyPrompt('p3')">Kopiér prompt</button>
 </div>
+<div class="prompt" id="p3">Du skal lave et computerspil til faget virksomhedsøkonomi.
+
+Spillet skal programmeres i html, og kunne både downloades som selvstændigt spil, eller køres via en hjemmeside. Spillet skal lære elever elementer fra faget virksomhedsøkonomi A på HHX, indenfor emnet regnskabsanalyse.
+
+Formålet med spillet er at lære elever på HHX som har virksomhedsøkonomi på A eller B niveau om beslutninger i en virksomhed, og hvordan disse påvirker regnskabet. Det skal være en sjov måde at lære om resultatopgørelsens elementer, samt om hvordan beslutninger på ledelsesniveau i en virksomhed påvirker dette regnskab.
+
+Opbygningen af spillet skal være en række virksomhedsbeslutninger, som enten tilfører eller fratrækker penge i resultatopgørelsen. Designet skal være at der i højre side af skærmen er en resultatopgørelse for virksomheden, og så kommer en række beslutninger. Hver beslutning skal påvirke den samlede resultatopgørelse, på flere niveau.
+
+Eksempelvis kan en beslutning være at købe en maskine, som både øger kapacitetsomkostningerne, men også gør enhedsprisen lavere, så de variable omkostninger falder.
+
+Hver beslutning skal bygges sammen med de tidligere, så der efter 10 beslutninger fremstår en færdig resultatopgørelse. Målet er at have så stort overskud som overhovedet muligt.
+
+Resultatopgørelsen skal have en base, altså en default som den starter på i alle spil. Det er herfra at der lægges til eller trækkes fra.
+
+Efter 10 beslutninger, skal spillerens high score komme frem på skærmen, så de kan tage et screenshot og sammenligne med andre. Scoren er baseret på &quot;overskud før skat&quot;.
+
+Hvis virksomheden undervejs i spillet går konkurs, pga for mange negative beslutninger, skal der komme en tekstboks frem med følgende: &quot;Din virksomhed er gået konkurs. Prøv igen?&quot; og så en knap til at starte forfra.
+
+Der skal være 100 forskellige scenarier, 50 for handelsvirksomheder og 50 for produktionsvirksomheder, og 10 udvælges i hvert spil. Så held er en faktor.
+
+I starten af spillet skal eleven vælge om det er den artsopdelte (handelsvirksomheder) eller funktionsopdelte (produktionsvirksomheder) resultatopgørelse som anvendes, og scenarierne skal tilpasses til den type virksomhed.
+
+Hvert scenarie skal have en kort tekst, som forklarer hvad beslutningen går ud på, men selve tallene og dermed konsekvenserne af beslutningen skal ikke fremgå. Det kommer i resultatopgørelse. Når resultatopgørelsen opdateres, skal ændringerne i tallene fremstå med farvet tekst, grøn for forbedring, rød for forværring, samt et plus tegn eller minus tegn. Ændringen skal stå der indtil spilleren trykker &quot;næste scenarie&quot;.
+
+Til baggrundsinformation om faget virksomhedsøkonomi på A niveau, skal du undersøge indholdet i faget via relevante fagbøger, og undervisningsbeskrivelsen fra uvm.dk. Du skal lave virkelighedsnære scenarier, baseret på artikler om virkelige virksomheder. Hvilke påvirkninger de har på virksomheden skal du selv regne ud, men beløbsstørrelserne skal være i samme størrelsesorden (order of magnitude), så der ikke er enkelte scenarier som egenhændigt kan vinde eller tabe spillet.
+
+Fagbogen som vi bruger på vores skole hedder &quot;virksomhedsøkonomi&quot; og kommer fra systime.dk.
+
+For inspiration til design så kig på gymspil.dk. Spillet skal være en videreudvikling, så design det flottere end eksisterende spil.
+
+Det er meget vigtigt at alle informationerne er fagligt korrekte, så for hvert scenarie skal du undersøge for mulige fejl, indtil du med en statistisk sikkerhed på 95% kan sige at det er korrekt.
+
+Det er vigtigere at være korrekt, end at være hurtig. Brug den tid der er nødvendig, indtil spillet er helt korrekt.</div>
 </article>
 </div>
 </section>
