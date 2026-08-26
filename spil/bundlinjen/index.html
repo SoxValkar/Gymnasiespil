@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Bundlinjen – Virksomhedsøkonomi</title>
+<style>
+:root {
+  --bg:#07111f; --panel:#0c1a2b; --panel2:#101f33; --line:#233750;
+  --text:#eef5ff; --muted:#9fb1c8; --accent:#6ee7c7; --accent2:#83b8ff;
+  --good:#62e6a8; --bad:#ff7f87; --warn:#ffd27a; --white:#fff;
+  --shadow:0 24px 60px rgba(0,0,0,.30); --radius:22px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{min-height:100vh;background:
+radial-gradient(circle at 12% 0%,rgba(86,165,255,.16),transparent 28rem),
+radial-gradient(circle at 100% 20%,rgba(110,231,199,.12),transparent 30rem),
+linear-gradient(180deg,#07111f 0%,#091421 100%);overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.16;background-image:
+linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:32px 32px;mask-image:linear-gradient(to bottom,black,transparent 80%)}
+button,a{font:inherit}
+button{cursor:pointer}
+a{color:var(--accent2)}
+.shell{width:min(1500px,calc(100% - 32px));margin:0 auto;padding:18px 0 32px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:8px 2px 18px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:900;letter-spacing:.08em}
+.brand-mark{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#06111c;font-weight:1000;box-shadow:0 10px 24px rgba(71,208,188,.18)}
+.brand small{display:block;color:var(--muted);font-weight:700;letter-spacing:.04em;font-size:.67rem;margin-top:2px}
+.top-actions{display:flex;gap:8px}
+.icon-btn{border:1px solid var(--line);background:rgba(12,26,43,.72);color:var(--text);border-radius:12px;padding:10px 13px;font-weight:800}
+.icon-btn:hover{border-color:#3a5778;background:#10223a}
+.screen{display:none}
+.screen.active{display:block}
+body.playing .topbar{display:none}
+body.playing .shell{padding-top:10px}
+body.playing #gameScreen{display:block}
+body.playing .game-head{margin-top:0}
+.hero{min-height:calc(100vh - 100px);display:grid;place-items:center;padding:24px 0 52px}
+.hero-card{width:min(1080px,100%);background:linear-gradient(145deg,rgba(16,31,51,.96),rgba(8,20,34,.96));border:1px solid var(--line);border-radius:30px;padding:clamp(28px,5vw,58px);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.hero-card:after{content:"";position:absolute;width:320px;height:320px;border-radius:50%;right:-120px;top:-150px;background:radial-gradient(circle,rgba(110,231,199,.18),transparent 67%);pointer-events:none}
+.kicker{color:var(--accent);font-weight:900;text-transform:uppercase;letter-spacing:.16em;font-size:.78rem}
+h1{font-size:clamp(2.5rem,7vw,5.7rem);line-height:.92;letter-spacing:-.055em;margin:13px 0 18px;max-width:820px}
+.hero-copy{max-width:760px;color:#c7d5e6;font-size:clamp(1.02rem,2vw,1.23rem);line-height:1.65;margin:0 0 34px}
+.mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.mode-card{text-align:left;border:1px solid #28415f;background:#0c1a2c;color:var(--text);border-radius:20px;padding:22px;transition:.2s transform,.2s border-color,.2s background;min-height:190px}
+.mode-card:hover{transform:translateY(-3px);border-color:var(--accent);background:#102239}
+.mode-tag{display:inline-flex;padding:6px 9px;border-radius:999px;background:rgba(110,231,199,.1);color:var(--accent);font-size:.75rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+.mode-card h2{font-size:1.38rem;margin:14px 0 8px}
+.mode-card p{color:var(--muted);line-height:1.5;margin:0 0 16px}
+.mode-card strong{color:var(--white)}
+.start-note{display:flex;gap:18px;flex-wrap:wrap;color:#8296af;font-size:.83rem;margin-top:20px}
+.game-layout{display:grid;grid-template-columns:minmax(0,1.18fr) minmax(410px,.82fr);gap:20px;align-items:start}
+.game-main{min-width:0}
+.game-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;margin:8px 0 16px}
+.game-head h2{margin:4px 0 0;font-size:clamp(1.65rem,3.2vw,2.55rem);letter-spacing:-.035em}
+.progress-wrap{min-width:220px}
+.progress-label{display:flex;justify-content:space-between;color:var(--muted);font-size:.8rem;font-weight:800;margin-bottom:7px}
+.progress{height:8px;background:#12243a;border-radius:999px;overflow:hidden;border:1px solid #223750}
+.progress > div{height:100%;width:0;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .35s ease}
+.scenario-card{background:linear-gradient(145deg,rgba(15,31,52,.98),rgba(9,21,36,.98));border:1px solid var(--line);border-radius:var(--radius);padding:clamp(22px,3.5vw,36px);box-shadow:var(--shadow);min-height:520px;display:flex;flex-direction:column}
+.scenario-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+.pill{padding:7px 10px;border-radius:999px;background:#12263f;color:#b9cae0;font-weight:800;font-size:.77rem;border:1px solid #263d5a}
+.pill.company{color:var(--accent);border-color:rgba(110,231,199,.25);background:rgba(110,231,199,.07)}
+.scenario-card h3{font-size:clamp(1.7rem,3.3vw,2.65rem);line-height:1.05;letter-spacing:-.04em;margin:0 0 16px}
+.scenario-text{font-size:1.05rem;line-height:1.72;color:#c8d6e7;max-width:820px;margin:0 0 28px}
+.choice-label{color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.12em;font-weight:900;margin-bottom:10px}
+.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.choice-btn{border:1px solid #2b4565;background:#10213a;color:var(--text);border-radius:16px;padding:17px 16px;text-align:left;font-weight:900;line-height:1.3;min-height:72px;transition:.16s}
+.choice-btn:hover:not(:disabled){border-color:var(--accent);transform:translateY(-2px);background:#132943}
+.choice-btn:disabled{opacity:.54;cursor:default}
+.choice-btn.selected{opacity:1;border-color:var(--accent);box-shadow:0 0 0 2px rgba(110,231,199,.12) inset}
+.feedback{display:none;margin-top:18px;border-top:1px solid var(--line);padding-top:18px}
+.feedback.show{display:block}
+.feedback-title{font-weight:950;margin-bottom:7px}
+.feedback p{margin:0;color:#b9c9dc;line-height:1.55}
+.feedback .source-link{display:inline-block;margin-top:11px;font-size:.82rem;text-decoration:none;font-weight:800}
+.next-row{display:flex;justify-content:flex-end;margin-top:auto;padding-top:22px}
+.next-btn{display:none;border:0;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#06111c;border-radius:14px;padding:14px 19px;font-weight:1000;box-shadow:0 12px 25px rgba(71,208,188,.16)}
+.next-btn.show{display:inline-flex}
+.statement{position:sticky;top:14px;background:rgba(9,22,38,.96);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.statement-head{padding:20px 20px 14px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(22,44,72,.55),rgba(9,22,38,.1))}
+.statement-headline{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.statement h3{margin:0;font-size:1.05rem}
+.statement-sub{color:var(--muted);font-size:.78rem;margin-top:4px}
+.live-score{text-align:right}
+.live-score span{display:block;color:var(--muted);font-size:.7rem;text-transform:uppercase;font-weight:900;letter-spacing:.08em}
+.live-score strong{font-size:1.05rem}
+.rows{padding:8px 14px 12px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;min-height:38px;padding:6px 7px;border-bottom:1px solid rgba(35,55,80,.55)}
+.row:last-child{border-bottom:0}
+.row-label{color:#c9d7e8;font-size:.88rem}
+.row-value{font-variant-numeric:tabular-nums;text-align:right;font-weight:800;white-space:nowrap}
+.row.derived{background:rgba(255,255,255,.025);border-radius:8px;border-bottom-color:transparent;margin:3px 0}
+.row.derived .row-label,.row.derived .row-value{font-weight:950;color:#f4f8ff}
+.row.total{margin-top:7px;background:linear-gradient(90deg,rgba(110,231,199,.08),rgba(131,184,255,.06));border:1px solid rgba(110,231,199,.22);border-radius:10px}
+.row.total .row-label,.row.total .row-value{font-size:.96rem;color:#fff;font-weight:1000}
+.delta{display:block;font-size:.72rem;margin-top:2px;min-height:1em;font-weight:1000}
+.delta.good{color:var(--good)} .delta.bad{color:var(--bad)} .delta.neutral{color:var(--muted)}
+.flash-good{animation:flashGood .9s ease} .flash-bad{animation:flashBad .9s ease}
+@keyframes flashGood{0%{background:rgba(98,230,168,.22)}100%{background:transparent}}
+@keyframes flashBad{0%{background:rgba(255,127,135,.19)}100%{background:transparent}}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 14px 14px}
+.metric{background:#0d1d31;border:1px solid #213752;border-radius:12px;padding:10px}
+.metric span{display:block;color:var(--muted);font-size:.67rem;line-height:1.25;min-height:2.4em}
+.metric strong{display:block;margin-top:5px;font-size:.95rem}
+.source-mini{padding:0 20px 18px;color:#70869f;font-size:.69rem;line-height:1.4}
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(2,8,15,.78);backdrop-filter:blur(8px);z-index:20;padding:22px;overflow:auto}
+.modal-backdrop.show{display:grid;place-items:center}
+.modal{width:min(850px,100%);background:#0b1a2d;border:1px solid #2a425f;border-radius:24px;box-shadow:0 30px 80px rgba(0,0,0,.45);padding:26px;max-height:min(88vh,850px);overflow:auto}
+.modal-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.modal h2{margin:0 0 8px;font-size:1.6rem}
+.modal p,.modal li{color:#b8c8da;line-height:1.6}
+.close-btn{border:1px solid var(--line);background:#10213a;color:white;border-radius:10px;padding:8px 11px;font-weight:900}
+.source-list{display:grid;gap:8px;margin-top:12px}
+.source-item{border:1px solid #223a58;border-radius:12px;padding:11px 12px;background:#0d1f35}
+.source-item a{text-decoration:none;font-weight:850}
+.overlay-card{width:min(680px,100%);text-align:center;background:linear-gradient(145deg,#10243c,#081421);border:1px solid #2b4666;border-radius:28px;padding:clamp(28px,6vw,52px);box-shadow:0 30px 90px rgba(0,0,0,.55)}
+.overlay-card h2{font-size:clamp(2rem,6vw,3.8rem);line-height:1;margin:8px 0 14px;letter-spacing:-.05em}
+.overlay-card p{color:#b9c9dc;line-height:1.6}
+.score-box{margin:24px auto 18px;padding:20px;border:1px solid rgba(110,231,199,.25);background:rgba(110,231,199,.07);border-radius:18px}
+.score-box span{display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.11em;font-size:.73rem;font-weight:900}
+.score-box strong{display:block;font-size:clamp(2.4rem,7vw,4.8rem);letter-spacing:-.06em;margin-top:4px}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.score-mini{border:1px solid #29415e;background:#0b1b2e;border-radius:12px;padding:12px}
+.score-mini span{font-size:.68rem;color:var(--muted);text-transform:uppercase;font-weight:900;letter-spacing:.08em}
+.score-mini strong{display:block;margin-top:4px}
+.primary-btn{border:0;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#06111c;border-radius:14px;padding:14px 18px;font-weight:1000}
+.secondary-btn{border:1px solid #2c4665;background:#0d2036;color:white;border-radius:14px;padding:14px 18px;font-weight:900}
+.overlay-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:20px}
+.bankrupt h2{font-size:clamp(1.8rem,5vw,3.2rem)}
+@media (max-width:980px){
+ .game-layout{grid-template-columns:1fr}
+ .statement{position:relative;top:0;order:-1}
+ .game-layout{display:flex;flex-direction:column}
+ .game-main,.statement{width:100%}
+ .game-head{align-items:flex-start}
+}
+@media (max-width:680px){
+ .shell{width:min(100% - 20px,1500px);padding-top:10px}
+ .brand small{display:none}
+ .mode-grid,.choices{grid-template-columns:1fr}
+ .hero-card{border-radius:22px;padding:28px 20px}
+ .game-head{display:block}
+ .progress-wrap{margin-top:16px;min-width:0}
+ .scenario-card{padding:22px 18px;min-height:0}
+ .statement-head{padding:16px}
+ .rows{padding:6px 9px 10px}
+ .row{min-height:35px}
+ .row-label{font-size:.8rem}
+ .row-value{font-size:.8rem}
+ .metrics{padding:0 9px 10px}
+ .metric{padding:8px}
+ .metric span{font-size:.62rem}
+ .modal-backdrop{padding:10px}
+ .modal{padding:20px 16px;border-radius:18px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark">B</div><div>BUNDLINJEN<small>VIRKSOMHEDSØKONOMI · HHX</small></div></div>
+    <div class="top-actions">
+      <button type="button" class="icon-btn" id="infoBtn" aria-label="Faglig info">Faglig info</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="startScreen" class="screen active hero">
+      <div class="hero-card">
+        <div class="kicker">Ledelsesspil · resultatopgørelse</div>
+        <h1>Ti beslutninger. Én bundlinje.</h1>
+        <p class="hero-copy">Du overtager en virksomhed med et fast udgangspunkt. Vælg mellem realistiske ledelsesbeslutninger, se hvordan flere poster i resultatopgørelsen flytter sig – og slut med det størst mulige overskud før skat.</p>
+        <div class="mode-grid">
+          <button type="button" class="mode-card" data-mode="trade">
+            <span class="mode-tag">Handelsvirksomhed</span>
+            <h2>Artsopdelt resultatopgørelse</h2>
+            <p>Arbejd med nettoomsætning, vareforbrug, andre eksterne omkostninger, personale, afskrivninger og finansielle poster.</p>
+            <strong>Start handelsvirksomhed →</strong>
+          </button>
+          <button type="button" class="mode-card" data-mode="production">
+            <span class="mode-tag">Produktionsvirksomhed</span>
+            <h2>Funktionsopdelt resultatopgørelse</h2>
+            <p>Arbejd med nettoomsætning, produktions-, distributions- og administrationsomkostninger samt finansielle poster.</p>
+            <strong>Start produktionsvirksomhed →</strong>
+          </button>
+        </div>
+        <div class="start-note"><span>10 tilfældige scenarier pr. spil</span><span>50 scenarier pr. virksomhedstype</span><span>Score = overskud før skat</span></div>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen">
+      <div class="game-layout">
+        <div class="game-main">
+          <div class="game-head">
+            <div>
+              <div class="kicker" id="modeKicker">Handelsvirksomhed</div>
+              <h2 id="gameTitle">Artsopdelt resultatopgørelse</h2>
+            </div>
+            <div class="progress-wrap">
+              <div class="progress-label"><span>Beslutninger</span><span id="progressText">1 / 10</span></div>
+              <div class="progress"><div id="progressBar"></div></div>
+            </div>
+          </div>
+          <article class="scenario-card">
+            <div class="scenario-meta">
+              <span class="pill" id="scenarioNo">Scenarie 1</span>
+              <span class="pill company" id="companyPill">Virkelighedskrog</span>
+            </div>
+            <h3 id="scenarioTitle"></h3>
+            <p class="scenario-text" id="scenarioText"></p>
+            <div class="choice-label">Hvad vælger ledelsen?</div>
+            <div class="choices" id="choices"></div>
+            <div class="feedback" id="feedback">
+              <div class="feedback-title">Faglig pointe</div>
+              <p id="feedbackText"></p>
+              <a class="source-link" id="sourceLink" target="_blank" rel="noopener">Se inspirationskilden ↗</a>
+            </div>
+            <div class="next-row"><button type="button" id="nextBtn" class="next-btn">Næste scenarie →</button></div>
+          </article>
+        </div>
+
+        <aside class="statement">
+          <div class="statement-head">
+            <div class="statement-headline">
+              <div><h3>Resultatopgørelse</h3><div class="statement-sub" id="statementType"></div></div>
+              <div class="live-score"><span>Overskud før skat</span><strong id="liveScore"></strong></div>
+            </div>
+          </div>
+          <div class="rows" id="statementRows"></div>
+          <div class="metrics" id="metrics"></div>
+          <div class="source-mini">Beløb er didaktisk skalerede til den fiktive virksomhed. Ændringen fra den seneste beslutning bliver stående, indtil du går videre.</div>
+        </aside>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="infoModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+    <div class="modal-top">
+      <div><div class="kicker">Fagligt grundlag</div><h2 id="infoTitle">Hvad spillet træner</h2></div>
+      <button type="button" class="close-btn" id="closeInfo">Luk</button>
+    </div>
+    <p>Spillet træner sammenhængen mellem ledelsesbeslutninger og resultatopgørelsens poster. Det faglige fokus følger kernestoffet i Virksomhedsøkonomi A: årsregnskab, regnskabsanalyse, indtjeningsevne, rentabilitet, logistik, investering og finansiering.</p>
+    <ul>
+      <li><strong>Maskiner og andre anlægsinvesteringer:</strong> hele købsprisen udgiftsføres ikke straks i resultatopgørelsen. Spillet lader resultatet blive påvirket gennem bl.a. afskrivninger, renter og driftsmæssige effekter.</li>
+      <li><strong>Varelager:</strong> varekøb er ikke automatisk vareforbrug. I handelsvirksomheden modelleres effekten, når varer sælges, nedskrives eller på anden måde påvirker periodens vareforbrug.</li>
+      <li><strong>Funktionsopdeling:</strong> i produktionsvirksomheden indgår produktionsrelateret løn, energi og afskrivning i produktionsomkostningerne. Marketing og salg ligger typisk under distributionsomkostninger.</li>
+      <li><strong>Konkurs:</strong> reel konkurs afhænger især af betalingsevne og finansiel situation. Spillet bruger derfor kun en forenklet konkursmekanik, når de kumulerede negative beslutningseffekter bliver meget store.</li>
+      <li><strong>Virkelighedscases:</strong> scenarierne er inspireret af rapporterede beslutninger hos rigtige virksomheder, men beløbene er bevidst skaleret til samme størrelsesorden, så ingen enkelt case afgør spillet alene.</li>
+    </ul>
+    <h3>Kilder og inspiration</h3>
+    <div class="source-list" id="sourceList"></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="endModal">
+  <div class="overlay-card" id="endCard">
+    <div class="kicker">10 / 10 beslutninger</div>
+    <h2>Din bundlinje</h2>
+    <p id="endType"></p>
+    <div class="score-box"><span>Overskud før skat</span><strong id="finalScore"></strong></div>
+    <div class="score-grid">
+      <div class="score-mini"><span>High score på denne enhed</span><strong id="highScore"></strong></div>
+      <div class="score-mini"><span>Ændring fra basis</span><strong id="changeFromBase"></strong></div>
+    </div>
+    <p id="runId" style="font-size:.78rem;color:#7388a1;margin-top:16px"></p>
+    <div class="overlay-actions">
+      <button type="button" class="primary-btn" id="playAgain">Spil igen</button>
+      <button type="button" class="secondary-btn" id="changeMode">Skift virksomhedstype</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="bankruptModal">
+  <div class="overlay-card bankrupt">
+    <div class="kicker">Konkurs</div>
+    <h2>Din virksomhed er gået konkurs. Prøv igen?</h2>
+    <p>De samlede negative beslutningseffekter har passeret spillets konkursgrænse.</p>
+    <div class="overlay-actions"><button type="button" class="primary-btn" id="restartBankrupt">Start forfra</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const DATA={"sources":{"IKEA":{"name":"IKEA – prisnedsættelser og volumen","url":"https://www.reuters.com/business/retail-consumer/ikea-sales-fall-5-after-price-cuts-amid-weak-housing-market-2024-10-10/"},"JYSK":{"name":"JYSK – vækst, butikker og distributionscentre","url":"https://jysk.com/news/jysk-sets-new-turnover-and-customer-records"},"MATAS":{"name":"Matas Group – automatisering, synergi og omnichannel","url":"https://matasgroup.com/news/matas-group-annual-report-2025-26/"},"ZALANDO":{"name":"Zalando – AI, logistik og returhåndtering","url":"https://corporate.zalando.com/en/investor-relations/zalando-full-year-2025-results"},"INDITEX":{"name":"Inditex – butikker, e-commerce og logistikinvesteringer","url":"https://annualreport.inditex.com/anrpxxvui/en/ceo-statement"},"LEGO":{"name":"LEGO – nye fabrikker, kapacitet og energi","url":"https://www.lego.com/en-se/aboutus/news/2025/april/the-lego-group-opens-new-state-of-the-art-factory-in-Vietnam"},"NOVO":{"name":"Novo Nordisk – produktionskapacitet og fill-finish","url":"https://www.novonordisk.com/news-and-media/news-and-ir-materials/news-details.html?id=168528"},"ARLA":{"name":"Arla – produktionsudvidelser og ny teknologi","url":"https://www.arla.com/company/news-and-press/2024/pressrelease/technology-step-change-arla-foods-invests-eur-210-million-to-secure-position-as-key-global-mozzarella-producer/"},"VESTAS":{"name":"Vestas – manufacturing ramp-up og margin","url":"https://www.vestas.com/en/media/company-news/2025/vestas-annual-report-2024---progress-in-a-challenging-y-c4100723"},"PANDORA":{"name":"Pandora – nye crafting-faciliteter og genanvendte metaller","url":"https://www.pandoragroup.com/-/media/files/annual-reports/pandora-annual-report-2024.pdf"},"CARLSBERG":{"name":"Carlsberg – kommercielle investeringer og drift","url":"https://www.carlsberggroup.com/newsroom/fy-2024-financial-statement/"}},"trade":[{"id":"H01","title":"Prisoffensiv på hele sortimentet","source":"IKEA","text":"Boligmarkedet er sløvt, og færre kunder køber stort ind. Ledelsen overvejer at sænke priserne for at trække flere kunder ind og øge volumen.","lesson":"Lavere pris kan løfte volumen, men en større omsætning er ikke det samme som en større indtjening.","choices":[{"label":"Sænk priserne bredt","impacts":{"revenue":4900000,"cogs":3550000,"external":450000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}},{"label":"Brug målrettede tilbud","impacts":{"revenue":3200000,"cogs":2000000,"external":400000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H02","title":"Ny butik i vækstby","source":"JYSK","text":"Kæden har fundet et godt lokale i en mellemstor by, hvor den endnu ikke er repræsenteret. En ny butik kan skabe ekstra salg, men binder også kapacitet.","lesson":"Butiksåbninger kan løfte toplinjen, men husleje, løn og afskrivninger følger med.","choices":[{"label":"Åbn butikken","impacts":{"revenue":5300000,"cogs":2950000,"external":950000,"personnel":1050000,"depr":300000,"finIncome":0,"finCost":200000}},{"label":"Løft online-salget i området","impacts":{"revenue":1600000,"cogs":800000,"external":200000,"personnel":100000,"depr":200000,"finIncome":0,"finCost":0}}]},{"id":"H03","title":"Nyt distributionscenter tættere på kunderne","source":"JYSK","text":"Transporten til flere markeder er blevet dyr og langsom. Et regionalt distributionscenter kan forkorte afstande, men kræver investering.","lesson":"Logistikvalg flytter omkostninger mellem eksterne ydelser, personale, afskrivninger og finansiering.","choices":[{"label":"Byg eget distributionscenter","impacts":{"revenue":1600000,"cogs":-450000,"external":-900000,"personnel":-250000,"depr":700000,"finIncome":0,"finCost":300000}},{"label":"Outsource mere logistik","impacts":{"revenue":650000,"cogs":0,"external":950000,"personnel":-850000,"depr":-200000,"finIncome":0,"finCost":-50000}}]},{"id":"H04","title":"Automatiseret lager","source":"MATAS","text":"Ordremængden fra webshoppen vokser. Ledelsen kan investere i mere automatisering for at reducere manuel plukning og fejl.","lesson":"En investering rammer ikke resultatet med hele købsprisen; resultatet påvirkes bl.a. gennem afskrivninger, renter og driftsbesparelser.","choices":[{"label":"Automatisér lageret","impacts":{"revenue":1000000,"cogs":-400000,"external":-900000,"personnel":-900000,"depr":700000,"finIncome":0,"finCost":250000}},{"label":"Ansæt flere på lageret","impacts":{"revenue":300000,"cogs":0,"external":100000,"personnel":500000,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H05","title":"Personlige klubtilbud","source":"MATAS","text":"Kundeklubben har mange medlemmer, men tilbuddene er i dag brede. Data kan bruges til mere målrettede kampagner.","lesson":"Målretning kan give mere omsætning pr. kampagnekrone end brede rabatter.","choices":[{"label":"Gør tilbud personlige","impacts":{"revenue":3150000,"cogs":1700000,"external":800000,"personnel":100000,"depr":100000,"finIncome":0,"finCost":0}},{"label":"Kør brede kampagner","impacts":{"revenue":4150000,"cogs":2800000,"external":1250000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H06","title":"Flere egne mærker","source":"MATAS","text":"Egne mærker giver større kontrol over sortiment og avance, men kræver udvikling og markedsføring.","lesson":"Egne mærker kan reducere vareforbruget relativt til salgsprisen, mens kendte mærker kan trække volumen.","choices":[{"label":"Udvid egne mærker","impacts":{"revenue":1500000,"cogs":-950000,"external":350000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}},{"label":"Satse på kendte leverandørbrands","impacts":{"revenue":2100000,"cogs":1500000,"external":200000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H07","title":"Større flagship-butik","source":"MATAS","text":"En central butik har høj kundetrafik og mangler plads til sortiment og rådgivning.","lesson":"Mere salgsareal kan skabe omsætning, men øger kapacitetsomkostninger og afskrivninger.","choices":[{"label":"Udvid butikken markant","impacts":{"revenue":2100000,"cogs":1050000,"external":350000,"personnel":100000,"depr":600000,"finIncome":0,"finCost":100000}},{"label":"Optimér den nuværende butik","impacts":{"revenue":1600000,"cogs":800000,"external":200000,"personnel":100000,"depr":200000,"finIncome":0,"finCost":0}}]},{"id":"H08","title":"Fælles nordisk webshop-platform","source":"MATAS","text":"Flere markeder bruger forskellige digitale løsninger. En fælles platform kan skabe skala, men kræver investering og implementering.","lesson":"Digital standardisering kan sænke løbende omkostninger, selv om afskrivningerne stiger.","choices":[{"label":"Saml platformene","impacts":{"revenue":2300000,"cogs":1150000,"external":-400000,"personnel":-200000,"depr":400000,"finIncome":0,"finCost":100000}},{"label":"Behold separate systemer","impacts":{"revenue":400000,"cogs":200000,"external":700000,"personnel":200000,"depr":50000,"finIncome":0,"finCost":0}}]},{"id":"H09","title":"Elektroniske hyldeforkanter","source":"MATAS","text":"Priser ændres ofte, og medarbejdere bruger tid på papirskilte. Elektroniske labels kan automatisere processen.","lesson":"Automatisering kan flytte omkostninger fra løn til afskrivninger.","choices":[{"label":"Indfør elektroniske labels","impacts":{"revenue":800000,"cogs":0,"external":-150000,"personnel":-550000,"depr":350000,"finIncome":0,"finCost":50000}},{"label":"Fortsæt med manuelle labels","impacts":{"revenue":0,"cogs":0,"external":50000,"personnel":350000,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H10","title":"Billigere sortiment i presset marked","source":"MATAS","text":"Flere kunder går efter lavere priser. Ledelsen kan udvide med flere value-produkter eller fastholde et mere premium sortiment.","lesson":"Produktmix påvirker både omsætning og vareforbrug; højere salg giver ikke automatisk højere bruttoavance.","choices":[{"label":"Udvid value-sortimentet","impacts":{"revenue":3800000,"cogs":2250000,"external":300000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}},{"label":"Fasthold premium-fokus","impacts":{"revenue":-800000,"cogs":-900000,"external":150000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H11","title":"Nedskrivningstruet sæsonlager","source":"MATAS","text":"En del sæsonvarer sælger langsommere end planlagt. Lageret risikerer at miste værdi.","lesson":"Udsalg kan frigøre lager, men presser bruttoavancen. Langsom afvikling kan koste ekstra markedsføring og lagerhåndtering.","choices":[{"label":"Ryd hurtigt med rabatter","impacts":{"revenue":2450000,"cogs":2750000,"external":250000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}},{"label":"Sæt priserne ned gradvist","impacts":{"revenue":1100000,"cogs":1000000,"external":450000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H12","title":"Lokale returcentre","source":"ZALANDO","text":"Webshoppen har mange returneringer. Hurtigere lokal behandling kan få varer tilbage til salg tidligere.","lesson":"Returhåndtering påvirker især eksterne logistikomkostninger og muligheden for at gensælge varer hurtigt.","choices":[{"label":"Brug lokale returcentre","impacts":{"revenue":850000,"cogs":-250000,"external":-700000,"personnel":150000,"depr":150000,"finIncome":0,"finCost":0}},{"label":"Saml alle returvarer centralt","impacts":{"revenue":-200000,"cogs":0,"external":500000,"personnel":-100000,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H13","title":"AI til produkttekster og kampagner","source":"ZALANDO","text":"Marketingteamet producerer tusindvis af produkttekster og billeder. AI kan automatisere en stor del af arbejdet.","lesson":"Teknologi kan sænke eksterne og personaleomkostninger, men giver typisk afskrivninger eller licensomkostninger.","choices":[{"label":"Skalér AI-produktion","impacts":{"revenue":1400000,"cogs":700000,"external":-750000,"personnel":-250000,"depr":200000,"finIncome":0,"finCost":0}},{"label":"Brug eksterne bureauer","impacts":{"revenue":850000,"cogs":400000,"external":1000000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H14","title":"Mere præcise leveringstider","source":"ZALANDO","text":"Kunder forlader kurven, når leveringstiden er usikker. Data kan bruges til mere præcise leveringsløfter.","lesson":"Bedre leveringsinformation kan øge konvertering og samtidig reducere unødige hasteomkostninger.","choices":[{"label":"Invester i AI-prognoser","impacts":{"revenue":1300000,"cogs":600000,"external":-550000,"personnel":-150000,"depr":250000,"finIncome":0,"finCost":0}},{"label":"Lov længere leveringstid med buffer","impacts":{"revenue":-850000,"cogs":-400000,"external":-200000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H15","title":"Robotter til plukning","source":"ZALANDO","text":"Plukning af varer er en stor lageropgave. Robotter kan håndtere flere standardvarer, mens medarbejdere tager undtagelserne.","lesson":"Robotter kan sænke løn pr. ordre, men øger afskrivning og finansieringsomkostninger.","choices":[{"label":"Rul robotter ud","impacts":{"revenue":1100000,"cogs":-450000,"external":-1000000,"personnel":-1000000,"depr":800000,"finIncome":0,"finCost":300000}},{"label":"Udvid bemandingen","impacts":{"revenue":350000,"cogs":0,"external":100000,"personnel":600000,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H16","title":"Gratis retur","source":"ZALANDO","text":"Gratis retur gør det trygt at købe tøj online, men returtransport og håndtering er dyr.","lesson":"En service kan løfte omsætningen og samtidig gøre andre eksterne omkostninger større.","choices":[{"label":"Behold gratis retur","impacts":{"revenue":2150000,"cogs":1150000,"external":1350000,"personnel":100000,"depr":0,"finIncome":0,"finCost":0}},{"label":"Indfør et mindre returgebyr","impacts":{"revenue":-1100000,"cogs":-550000,"external":-950000,"personnel":-50000,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H17","title":"Levering samme dag","source":"ZALANDO","text":"I storbyer efterspørger kunder hurtigere levering. Det kræver dyrere transport og mere kompleks drift.","lesson":"Hurtig levering kan være en omsætningsdriver, men den marginale logistikomkostning kan spise gevinsten.","choices":[{"label":"Tilbyd samme-dags levering","impacts":{"revenue":2550000,"cogs":1350000,"external":1550000,"personnel":100000,"depr":100000,"finIncome":0,"finCost":0}},{"label":"Hold standardlevering","impacts":{"revenue":-350000,"cogs":-200000,"external":-500000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H18","title":"Færre, større leverandører","source":"JYSK","text":"Indkøbsafdelingen kan samle volumen hos færre leverandører og presse indkøbsprisen, men afhængigheden stiger.","lesson":"Lavere indkøbspris reducerer vareforbruget, mens leveringssikkerhed kan påvirke salget.","choices":[{"label":"Konsolidér leverandørerne","impacts":{"revenue":-250000,"cogs":-1450000,"external":-150000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}},{"label":"Behold flere leverandører","impacts":{"revenue":950000,"cogs":700000,"external":250000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H19","title":"Prisgaranti mod konkurrenter","source":"IKEA","text":"Kunder sammenligner priser digitalt. En prisgaranti kan fastholde kunder, men presse avancen.","lesson":"Prisinitiativer påvirker både volumen og avance; kig på effekten under bruttoavance, ikke kun på omsætningen.","choices":[{"label":"Indfør prisgaranti","impacts":{"revenue":2100000,"cogs":1450000,"external":200000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}},{"label":"Hold egne priser","impacts":{"revenue":-1150000,"cogs":-650000,"external":-100000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H20","title":"Click & collect","source":"INDITEX","text":"Flere kunder vil bestille online og hente i butik. Det kan spare sidste kilometer, men kræver butiksarbejde.","lesson":"Omnichannel kan flytte logistikomkostninger og samtidig skabe mersalg i butikken.","choices":[{"label":"Udbyg click & collect","impacts":{"revenue":2150000,"cogs":1050000,"external":-300000,"personnel":200000,"depr":150000,"finIncome":0,"finCost":0}},{"label":"Fokusér på hjemmelevering","impacts":{"revenue":-450000,"cogs":-200000,"external":400000,"personnel":-100000,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H21","title":"Butikker som mini-lagre","source":"MATAS","text":"Nogle onlineordrer kan sendes fra den nærmeste butik i stedet for centrallageret.","lesson":"Udnyttelse af eksisterende lager kan sænke fragt og forbedre tilgængelighed, men kræver mere butiksarbejde.","choices":[{"label":"Send onlineordrer fra butikker","impacts":{"revenue":1500000,"cogs":750000,"external":-400000,"personnel":300000,"depr":100000,"finIncome":0,"finCost":0}},{"label":"Send alt fra centrallager","impacts":{"revenue":400000,"cogs":200000,"external":500000,"personnel":-150000,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H22","title":"Stor landsdækkende kampagne","source":"JYSK","text":"Kæden vil øge kendskabet før højsæsonen. Marketingbudgettet kan koncentreres i en stor kampagne.","lesson":"Reklame er en kapacitetsomkostning; den er kun attraktiv, hvis ekstra dækningsbidrag overstiger kampagneomkostningen.","choices":[{"label":"Kør den store kampagne","impacts":{"revenue":3700000,"cogs":2000000,"external":1350000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}},{"label":"Kør en mindre kampagne","impacts":{"revenue":1250000,"cogs":650000,"external":400000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H23","title":"Mere generøse loyalitetspoint","source":"MATAS","text":"Kundeklubben kan give flere point per køb for at øge genkøb.","lesson":"Loyalitetsfordele kan øge frekvensen, men rabatter og programdrift skal tjenes hjem igen.","choices":[{"label":"Giv flere point og tilbud","impacts":{"revenue":2450000,"cogs":1300000,"external":600000,"personnel":100000,"depr":100000,"finIncome":0,"finCost":0}},{"label":"Hold programmet uændret","impacts":{"revenue":-1500000,"cogs":-750000,"external":-100000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H24","title":"Længere åbningstid","source":"JYSK","text":"Butikker i storcentre kan holde længere åbent. Det giver adgang til aftenkunder, men kræver flere løntimer.","lesson":"Ekstra åbningstid er kun lønsom, hvis dækningsbidraget fra mersalget overstiger ekstra kapacitetsomkostninger.","choices":[{"label":"Udvid åbningstiden","impacts":{"revenue":1500000,"cogs":800000,"external":250000,"personnel":850000,"depr":0,"finIncome":0,"finCost":0}},{"label":"Behold nuværende tider","impacts":{"revenue":-250000,"cogs":-150000,"external":-50000,"personnel":-200000,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H25","title":"Flere selvbetjeningskasser","source":"INDITEX","text":"Køen ved kassen er lang i spidsbelastning. Selvbetjening kan frigøre personale, men kræver udstyr.","lesson":"Investeringer kan sænke personaleomkostninger, men skaber afskrivninger.","choices":[{"label":"Installer selvbetjening","impacts":{"revenue":450000,"cogs":0,"external":-50000,"personnel":-850000,"depr":500000,"finIncome":0,"finCost":50000}},{"label":"Behold bemandede kasser","impacts":{"revenue":350000,"cogs":0,"external":50000,"personnel":500000,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H26","title":"Mindre varesvind","source":"JYSK","text":"Varesvind og fejlregistreringer er steget. Kameraer, varealarmer og bedre kontrol kan reducere tab.","lesson":"Svind ender i praksis som højere vareforbrug eller nedskrivning; kontrol har selv en omkostning.","choices":[{"label":"Invester i tabsforebyggelse","impacts":{"revenue":100000,"cogs":-850000,"external":400000,"personnel":100000,"depr":100000,"finIncome":0,"finCost":0}},{"label":"Accepter nuværende svind","impacts":{"revenue":0,"cogs":800000,"external":-100000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H27","title":"Ét centrallager eller mere butikslager","source":"JYSK","text":"Ledelsen vil reducere lagerbinding og håndtering. Mere centralisering kan effektivisere, men øge afstand til kunden.","lesson":"Lagerstruktur påvirker især logistikomkostninger og servicegrad; selve lagerbindingen hører til balancen.","choices":[{"label":"Centralisér lageret","impacts":{"revenue":400000,"cogs":200000,"external":550000,"personnel":-150000,"depr":0,"finIncome":0,"finCost":0}},{"label":"Læg mere lager i butikkerne","impacts":{"revenue":1400000,"cogs":700000,"external":-400000,"personnel":250000,"depr":100000,"finIncome":0,"finCost":0}}]},{"id":"H28","title":"Webshop i flere lande","source":"INDITEX","text":"Den digitale platform kan åbnes i flere lande uden et fuldt butiksnet, men kræver lokalisering, marketing og logistik.","lesson":"International vækst giver ekstra omsætning, men også distributions-, marketing- og finansieringsomkostninger.","choices":[{"label":"Gå ind i flere lande online","impacts":{"revenue":2750000,"cogs":1400000,"external":750000,"personnel":200000,"depr":100000,"finIncome":0,"finCost":150000}},{"label":"Fokusér på hjemmemarkedet","impacts":{"revenue":850000,"cogs":400000,"external":200000,"personnel":-50000,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H29","title":"Influencer-kampagne","source":"MATAS","text":"Et nyt beauty-brand skal lanceres hurtigt til en yngre målgruppe.","lesson":"Marketingkanaler bør vurderes på ekstra dækningsbidrag i forhold til kampagneomkostningen.","choices":[{"label":"Brug influencers intensivt","impacts":{"revenue":2500000,"cogs":1300000,"external":950000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}},{"label":"Brug klassiske annoncer","impacts":{"revenue":1500000,"cogs":800000,"external":750000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H30","title":"Mere bæredygtig emballage","source":"IKEA","text":"Kunder og detailpartnere presser på for mindre plast og mere genanvendeligt materiale.","lesson":"Bæredygtige valg kan øge omkostningerne på kort sigt og samtidig påvirke efterspørgsel og brand.","choices":[{"label":"Skift til dyrere bæredygtig emballage","impacts":{"revenue":800000,"cogs":350000,"external":650000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}},{"label":"Behold den billigste emballage","impacts":{"revenue":-350000,"cogs":-150000,"external":-550000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H31","title":"Leveringsabonnement","source":"ZALANDO","text":"Hyppige kunder kan tilbydes et årsabonnement med fri standardlevering.","lesson":"Abonnement kan øge købshyppigheden, mens logistikomkostningen følger antallet af ordrer.","choices":[{"label":"Lancér abonnement","impacts":{"revenue":1400000,"cogs":550000,"external":500000,"personnel":50000,"depr":100000,"finIncome":0,"finCost":0}},{"label":"Lad kunder betale pr. levering","impacts":{"revenue":-350000,"cogs":-150000,"external":-250000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H32","title":"Betal leverandører tidligere mod rabat","source":"MATAS","text":"En stor leverandør tilbyder kontantrabat ved hurtigere betaling. Det sparer på indkøbet, men øger finansieringsbehovet.","lesson":"Indkøbsrabatten reducerer vareforbrug, mens finansieringen kan øge renteomkostningerne.","choices":[{"label":"Tag rabatten og betal tidligt","impacts":{"revenue":0,"cogs":-950000,"external":0,"personnel":0,"depr":0,"finIncome":50000,"finCost":500000}},{"label":"Behold lang kredittid","impacts":{"revenue":0,"cogs":100000,"external":0,"personnel":0,"depr":0,"finIncome":0,"finCost":-300000}}]},{"id":"H33","title":"Fast langtidsaftale på indkøb","source":"JYSK","text":"En leverandør tilbyder en lavere fast pris mod en længere kontrakt.","lesson":"Indkøbspris slår direkte igennem i vareforbruget; fleksibilitet kan til gengæld have værdi.","choices":[{"label":"Lås pris og volumen","impacts":{"revenue":450000,"cogs":-850000,"external":50000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}},{"label":"Køb løbende på spotmarkedet","impacts":{"revenue":200000,"cogs":800000,"external":-50000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H34","title":"Valutarisiko på indkøb","source":"INDITEX","text":"En stor del af varerne købes i udenlandsk valuta. Finansafdelingen kan afdække kursen.","lesson":"Valutaafdækning kan stabilisere vareforbruget, men har en finansiel eller administrativ pris.","choices":[{"label":"Afdæk valutaen","impacts":{"revenue":0,"cogs":-450000,"external":150000,"personnel":0,"depr":0,"finIncome":0,"finCost":200000}},{"label":"Lad kursen flyde","impacts":{"revenue":0,"cogs":600000,"external":0,"personnel":0,"depr":0,"finIncome":0,"finCost":-50000}}]},{"id":"H35","title":"Renovering af ældre butik","source":"JYSK","text":"En ældre butik har lavere salg pr. kvadratmeter end nyere butikker.","lesson":"Butiksinvesteringer kan løfte salg, men resultatopgørelsen rammes gennem afskrivninger og drift.","choices":[{"label":"Renovér til nyt koncept","impacts":{"revenue":2250000,"cogs":1100000,"external":400000,"personnel":100000,"depr":600000,"finIncome":0,"finCost":100000}},{"label":"Vent et år","impacts":{"revenue":-800000,"cogs":-400000,"external":-100000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H36","title":"Pop-up i nyt marked","source":"INDITEX","text":"Kæden vil teste efterspørgslen i en by uden at binde sig til en lang lejekontrakt.","lesson":"Midlertidige butikker har lavere binding, men stadig husleje, bemanding og kampagneomkostninger.","choices":[{"label":"Åbn pop-up butik","impacts":{"revenue":1300000,"cogs":700000,"external":500000,"personnel":250000,"depr":50000,"finIncome":0,"finCost":0}},{"label":"Test kun via online-marketing","impacts":{"revenue":800000,"cogs":400000,"external":200000,"personnel":0,"depr":50000,"finIncome":0,"finCost":0}}]},{"id":"H37","title":"Mere rådgivning i butik","source":"MATAS","text":"Kunder efterspørger hjælp til valg af produkter. Ledelsen overvejer flere specialister på gulvet.","lesson":"Service kan øge kurvstørrelse og konvertering, men lønomkostningen er en kapacitetsomkostning.","choices":[{"label":"Ansæt flere rådgivere","impacts":{"revenue":1900000,"cogs":800000,"external":250000,"personnel":1000000,"depr":50000,"finIncome":0,"finCost":0}},{"label":"Gå mere mod selvbetjening","impacts":{"revenue":-500000,"cogs":-200000,"external":-100000,"personnel":-500000,"depr":100000,"finIncome":0,"finCost":0}}]},{"id":"H38","title":"Træning i mersalg","source":"MATAS","text":"Butikspersonalet kan trænes i behovsafdækning og relevant mersalg.","lesson":"Træning koster nu, men kan løfte omsætningen senere; sammenlign ekstra dækningsbidrag med omkostningen.","choices":[{"label":"Gennemfør træning","impacts":{"revenue":1350000,"cogs":650000,"external":200000,"personnel":650000,"depr":0,"finIncome":0,"finCost":0}},{"label":"Drop træningen","impacts":{"revenue":-800000,"cogs":-350000,"external":-100000,"personnel":-150000,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H39","title":"Færre medarbejdere i stille timer","source":"JYSK","text":"Lønomkostningen er steget. Data viser perioder med lav kundetrafik.","lesson":"Besparelser på personale kan være dyre, hvis service og salg falder mere end lønnen.","choices":[{"label":"Skær bemandingen","impacts":{"revenue":-1800000,"cogs":-900000,"external":-200000,"personnel":-1250000,"depr":0,"finIncome":0,"finCost":0}},{"label":"Behold bemandingen","impacts":{"revenue":650000,"cogs":350000,"external":100000,"personnel":400000,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H40","title":"Outsource kundeservice","source":"ZALANDO","text":"Kundeservice kan flyttes til en ekstern partner med betaling per henvendelse.","lesson":"Outsourcing flytter typisk omkostninger fra personale til andre eksterne omkostninger.","choices":[{"label":"Outsource kundeservice","impacts":{"revenue":-550000,"cogs":-300000,"external":1000000,"personnel":-1050000,"depr":0,"finIncome":0,"finCost":0}},{"label":"Behold den internt","impacts":{"revenue":900000,"cogs":450000,"external":100000,"personnel":600000,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H41","title":"Marketplace uden eget lager","source":"ZALANDO","text":"Webshoppen kan lade flere eksterne brands sælge direkte på platformen i stedet for selv at købe alle varer hjem.","lesson":"Marketplace kan reducere vareforbrug og lagerbinding, men giver lavere omsætning pr. transaktion og platformomkostninger.","choices":[{"label":"Udvid marketplace-modellen","impacts":{"revenue":1900000,"cogs":500000,"external":800000,"personnel":150000,"depr":100000,"finIncome":0,"finCost":0}},{"label":"Køb varerne til eget lager","impacts":{"revenue":2600000,"cogs":1850000,"external":200000,"personnel":50000,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H42","title":"Aggressivt sæsonudsalg","source":"INDITEX","text":"Sæsonen slutter med for meget modevare på lager.","lesson":"Modevarer taber hurtigt værdi. Timing af rabatter handler om at beskytte bruttoavance uden at ende med ukurante varer.","choices":[{"label":"Ryd lageret hurtigt","impacts":{"revenue":2750000,"cogs":3050000,"external":250000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}},{"label":"Hold igen med rabatter","impacts":{"revenue":950000,"cogs":900000,"external":400000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H43","title":"Færre varenumre","source":"JYSK","text":"Sortimentet er blevet stort, og langsomt sælgende varer tager plads og skaber håndtering.","lesson":"Et smallere sortiment kan reducere håndtering og vareforbrug, men også koste omsætning.","choices":[{"label":"Skær de langsomme varenumre væk","impacts":{"revenue":-600000,"cogs":-650000,"external":-200000,"personnel":-50000,"depr":0,"finIncome":0,"finCost":0}},{"label":"Behold et bredt sortiment","impacts":{"revenue":1500000,"cogs":1100000,"external":350000,"personnel":50000,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H44","title":"Flere premiumbrands","source":"MATAS","text":"Ledelsen overvejer at tilføje dyrere mærker med stærk efterspørgsel, men høj indkøbspris.","lesson":"Premiumbrands kan øge omsætning, mens egne mærker ofte kan give højere bruttoavanceprocent.","choices":[{"label":"Tilføj premiumbrands","impacts":{"revenue":2100000,"cogs":1500000,"external":200000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}},{"label":"Prioritér egne mærker","impacts":{"revenue":1500000,"cogs":-950000,"external":350000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H45","title":"Flere value-produkter","source":"MATAS","text":"Kunderne er blevet mere prisfølsomme og handler ned i billigere produktkategorier.","lesson":"Når kunder handler ned, kan toplinjen og bruttoavancen udvikle sig forskelligt.","choices":[{"label":"Udvid value-sortimentet","impacts":{"revenue":3800000,"cogs":2250000,"external":300000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}},{"label":"Hold premium-mixet","impacts":{"revenue":-800000,"cogs":-900000,"external":150000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H46","title":"Energirenovering af butikker","source":"IKEA","text":"El og varme er en stor ekstern omkostning. LED, styring og nye anlæg kan sænke forbruget.","lesson":"Energibesparelser sænker eksterne omkostninger, mens investeringen giver afskrivninger og eventuelt renter.","choices":[{"label":"Energirenovér butikkerne","impacts":{"revenue":150000,"cogs":0,"external":-750000,"personnel":0,"depr":350000,"finIncome":0,"finCost":100000}},{"label":"Udskyd investeringen","impacts":{"revenue":0,"cogs":0,"external":550000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H47","title":"Flyt fra dyrt lejemål","source":"JYSK","text":"En butik har høj husleje i forhold til salget. Et lidt mindre centralt lokale er billigere og kan moderniseres.","lesson":"Husleje er en ekstern kapacitetsomkostning; en flytning kan samtidig påvirke kundetrafikken.","choices":[{"label":"Flyt butikken","impacts":{"revenue":1400000,"cogs":700000,"external":-800000,"personnel":150000,"depr":400000,"finIncome":0,"finCost":100000}},{"label":"Forny nuværende lejemål","impacts":{"revenue":200000,"cogs":100000,"external":550000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H48","title":"Fælles administration efter opkøb","source":"MATAS","text":"Efter et opkøb har to kæder stadig flere parallelle IT-, marketing- og administrationsfunktioner.","lesson":"Synergier betyder ofte lavere personale- og eksterne omkostninger, men integrationen kræver investering.","choices":[{"label":"Integrér backoffice","impacts":{"revenue":700000,"cogs":300000,"external":-550000,"personnel":-550000,"depr":200000,"finIncome":0,"finCost":100000}},{"label":"Behold organisationerne adskilt","impacts":{"revenue":400000,"cogs":200000,"external":350000,"personnel":350000,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H49","title":"Online prisjustering i realtid","source":"ZALANDO","text":"Priserne kan justeres oftere efter lager, konkurrence og efterspørgsel.","lesson":"Hyppigere prisstyring kan beskytte volumen, men kræver fokus på bruttoavance frem for omsætning alene.","choices":[{"label":"Brug dynamiske priser","impacts":{"revenue":3200000,"cogs":2000000,"external":400000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}},{"label":"Hold faste priser gennem sæsonen","impacts":{"revenue":-1300000,"cogs":-650000,"external":-100000,"personnel":0,"depr":0,"finIncome":0,"finCost":0}}]},{"id":"H50","title":"Ny butik eller shop-in-shop","source":"INDITEX","text":"Et nyt marked ser lovende ud, men efterspørgslen er usikker.","lesson":"Kapacitetsbeslutninger bør ses som et trade-off mellem potentiale og faste omkostninger.","choices":[{"label":"Åbn fuld butik","impacts":{"revenue":5600000,"cogs":3150000,"external":1000000,"personnel":1100000,"depr":350000,"finIncome":0,"finCost":200000}},{"label":"Start med en mindre test","impacts":{"revenue":1550000,"cogs":850000,"external":600000,"personnel":300000,"depr":50000,"finIncome":0,"finCost":0}}]}],"production":[{"id":"P01","title":"Ny fabrik tættere på vækstmarkedet","source":"LEGO","text":"Efterspørgslen vokser i en region langt fra de nuværende fabrikker. En ny fabrik kan øge kapaciteten og forkorte forsyningsvejen, men kræver stor kapital.","lesson":"Kapacitetsinvesteringer påvirker resultatet via drift, afskrivninger og finansiering – ikke med hele anlægsprisen på én gang.","choices":[{"label":"Byg den nye fabrik","impacts":{"revenue":5450000,"production":3300000,"distribution":450000,"admin":350000,"finIncome":0,"finCost":600000}},{"label":"Udvid eksisterende fabrikker","impacts":{"revenue":4000000,"production":2200000,"distribution":350000,"admin":200000,"finIncome":0,"finCost":300000}}]},{"id":"P02","title":"Solceller på fabrikstaget","source":"LEGO","text":"Elforbruget er højt og energipriserne svinger. Et stort solcelleanlæg kan reducere købt energi over tid.","lesson":"Energiprojekter kan reducere produktionsomkostninger, mens investeringen giver afskrivninger og eventuelle renter.","choices":[{"label":"Installer solceller","impacts":{"revenue":200000,"production":-900000,"distribution":0,"admin":50000,"finIncome":0,"finCost":200000}},{"label":"Køb al strøm fra nettet","impacts":{"revenue":0,"production":550000,"distribution":0,"admin":0,"finIncome":0,"finCost":0}}]},{"id":"P03","title":"Papirposer i stedet for plast","source":"LEGO","text":"Virksomheden vil skifte engangsplast i pakningen ud med papirbaserede poser. Materialet er dyrere, men kan styrke produktet og bæredygtighedsprofilen.","lesson":"Materialevalg rammer produktionsomkostningerne og kan samtidig påvirke efterspørgslen.","choices":[{"label":"Skift til papirbaseret emballage","impacts":{"revenue":800000,"production":550000,"distribution":100000,"admin":50000,"finIncome":0,"finCost":0}},{"label":"Behold plastemballagen","impacts":{"revenue":-250000,"production":-500000,"distribution":0,"admin":0,"finIncome":0,"finCost":0}}]},{"id":"P04","title":"Regionalt distributionscenter","source":"LEGO","text":"Varerne transporteres langt fra fabrik til kunder. Et regionalt distributionscenter kan gøre levering hurtigere og mere stabil.","lesson":"Et distributionscenter påvirker især distributionsomkostninger og service – ikke selve produktionsomkostningen.","choices":[{"label":"Åbn regionalt distributionscenter","impacts":{"revenue":1300000,"production":0,"distribution":-950000,"admin":100000,"finIncome":0,"finCost":250000}},{"label":"Behold ét centralt center","impacts":{"revenue":-350000,"production":0,"distribution":450000,"admin":-50000,"finIncome":0,"finCost":0}}]},{"id":"P05","title":"Mere automatiseret støbning","source":"LEGO","text":"Produktionslinjerne kan opgraderes med mere automatiseret håndtering og proceskontrol.","lesson":"Automatisering kan sænke enhedsomkostningen, men øger typisk afskrivning og finansieringsomkostninger inde i produktionsfunktionen.","choices":[{"label":"Automatisér mere","impacts":{"revenue":1350000,"production":-1400000,"distribution":-100000,"admin":150000,"finIncome":0,"finCost":350000}},{"label":"Behold mere manuelt arbejde","impacts":{"revenue":350000,"production":950000,"distribution":0,"admin":0,"finIncome":0,"finCost":0}}]},{"id":"P06","title":"Planlagt vedligehold af præcisionsudstyr","source":"LEGO","text":"Maskinerne arbejder med små tolerancer. Ledelsen kan øge den forebyggende vedligeholdelse for at reducere stop og fejl.","lesson":"Vedligehold koster nu, men kan reducere nedetid, fejl og tabt omsætning.","choices":[{"label":"Øg forebyggende vedligehold","impacts":{"revenue":1250000,"production":600000,"distribution":-150000,"admin":50000,"finIncome":0,"finCost":0}},{"label":"Udskyd vedligehold","impacts":{"revenue":-1700000,"production":-450000,"distribution":250000,"admin":0,"finIncome":0,"finCost":0}}]},{"id":"P07","title":"Ekstra kvalitetskontrol før pakning","source":"LEGO","text":"Fejlprocenten er lav, men reklamationer er dyre og skader leveringsevnen.","lesson":"Kvalitet har en direkte produktionsomkostning, men kan reducere fejl, retur og tabt salg.","choices":[{"label":"Tilføj ekstra kvalitetskontrol","impacts":{"revenue":1700000,"production":900000,"distribution":-350000,"admin":100000,"finIncome":0,"finCost":0}},{"label":"Hold den nuværende kontrol","impacts":{"revenue":-1750000,"production":-650000,"distribution":350000,"admin":-50000,"finIncome":0,"finCost":0}}]},{"id":"P08","title":"Genanvendt råvare i større andel","source":"LEGO","text":"Ledelsen vil øge andelen af genanvendt materiale. Leverandørprisen er højere, og processen kræver tilpasning.","lesson":"Dyrere input kan være lønsomme, hvis markedet accepterer højere værdi eller efterspørgsel.","choices":[{"label":"Øg andelen af genanvendt råvare","impacts":{"revenue":1500000,"production":900000,"distribution":100000,"admin":50000,"finIncome":0,"finCost":0}},{"label":"Behold standardmaterialet","impacts":{"revenue":-300000,"production":-600000,"distribution":0,"admin":0,"finIncome":0,"finCost":0}}]},{"id":"P09","title":"To leverandører på kritisk råvare","source":"LEGO","text":"En central råvare kommer fra én leverandør. En ekstra leverandør er dyrere, men reducerer risikoen for produktionsstop.","lesson":"Forsyningssikkerhed kan koste lidt mere per enhed, men beskytte omsætning ved forstyrrelser.","choices":[{"label":"Brug to leverandører","impacts":{"revenue":1200000,"production":550000,"distribution":150000,"admin":100000,"finIncome":0,"finCost":0}},{"label":"Behold én leverandør","impacts":{"revenue":-1050000,"production":-600000,"distribution":100000,"admin":-50000,"finIncome":0,"finCost":0}}]},{"id":"P10","title":"Midlertidig pakkelinje før ny fabrik","source":"LEGO","text":"Den permanente kapacitet er først klar senere. En midlertidig pakkelinje kan levere til markedet nu.","lesson":"Midlertidig kapacitet kan være dyrere per enhed, men kan bevare salg i en flaskehalsperiode.","choices":[{"label":"Åbn midlertidig pakkelinje","impacts":{"revenue":2250000,"production":1250000,"distribution":400000,"admin":150000,"finIncome":0,"finCost":0}},{"label":"Vent på permanent kapacitet","impacts":{"revenue":-1450000,"production":-800000,"distribution":-150000,"admin":0,"finIncome":0,"finCost":0}}]},{"id":"P11","title":"Udvid fill-finish-kapacitet","source":"NOVO","text":"Efterspørgslen overstiger den nuværende fylde- og pakkekapacitet. En stor udvidelse kan løfte leverancerne.","lesson":"Kapacitetsknaphed gør det vigtigt at sammenholde ekstra dækningsbidrag med ekstra produktions- og finansieringsomkostninger.","choices":[{"label":"Udvid kapaciteten nu","impacts":{"revenue":4700000,"production":2800000,"distribution":350000,"admin":250000,"finIncome":0,"finCost":500000}},{"label":"Vent og kør eksisterende anlæg hårdere","impacts":{"revenue":3300000,"production":2100000,"distribution":350000,"admin":150000,"finIncome":0,"finCost":0}}]},{"id":"P12","title":"Døgndrift på kritiske linjer","source":"NOVO","text":"En produktionslinje er en flaskehals. Ledelsen kan køre flere timer med tillæg og ekstra bemanding.","lesson":"Mere aktivitet giver både højere omsætning og højere produktionsomkostninger; forskellen er det afgørende.","choices":[{"label":"Kør 24/7","impacts":{"revenue":3500000,"production":2250000,"distribution":350000,"admin":150000,"finIncome":0,"finCost":0}},{"label":"Hold normal skifteplan","impacts":{"revenue":-950000,"production":-550000,"distribution":-150000,"admin":0,"finIncome":0,"finCost":0}}]},{"id":"P13","title":"Integrér nye produktionssites","source":"NOVO","text":"Virksomheden har overtaget flere produktionsanlæg. Fælles processer og systemer kan skabe skala, men integrationen koster.","lesson":"Synergier kan sænke produktion, distribution og administration, men integration er sjældent gratis.","choices":[{"label":"Integrér hurtigt","impacts":{"revenue":1600000,"production":-650000,"distribution":-300000,"admin":-600000,"finIncome":0,"finCost":200000}},{"label":"Lad sites køre separat","impacts":{"revenue":650000,"production":200000,"distribution":250000,"admin":700000,"finIncome":0,"finCost":0}}]},{"id":"P14","title":"Udfas ældre lavprioritetsprodukter","source":"NOVO","text":"Gamle produkter bruger knap kapacitet, som kunne anvendes til produkter med højere efterspørgsel.","lesson":"Når kapacitet er knap, kan produktmix påvirke indtjeningen mere end den samlede volumen.","choices":[{"label":"Udfas de ældre produkter","impacts":{"revenue":-1600000,"production":-1750000,"distribution":-250000,"admin":-150000,"finIncome":0,"finCost":0}},{"label":"Behold hele porteføljen","impacts":{"revenue":550000,"production":900000,"distribution":200000,"admin":100000,"finIncome":0,"finCost":0}}]},{"id":"P15","title":"Nyt kvalitetskontrollaboratorium","source":"NOVO","text":"Et større produktionssite mangler intern testkapacitet. Ekstern test er dyr og skaber ventetid.","lesson":"Kvalitetskontrol kan ligge i produktion eller administration afhængigt af funktion; vigtigst er konsekvent klassifikation.","choices":[{"label":"Byg internt QC-lab","impacts":{"revenue":1250000,"production":600000,"distribution":-150000,"admin":400000,"finIncome":0,"finCost":150000}},{"label":"Køb mere ekstern test","impacts":{"revenue":200000,"production":150000,"distribution":0,"admin":950000,"finIncome":0,"finCost":0}}]},{"id":"P16","title":"Modulær produktionslinje","source":"NOVO","text":"Næste anlæg kan bygges fleksibelt til flere produkter eller optimeres til ét produkt med høj effektivitet.","lesson":"Fleksibilitet kan koste mere nu, men skabe værdi ved ændret produktmix og kapacitetsbehov.","choices":[{"label":"Vælg modulær linje","impacts":{"revenue":2250000,"production":1100000,"distribution":100000,"admin":250000,"finIncome":0,"finCost":250000}},{"label":"Vælg dedikeret linje","impacts":{"revenue":1600000,"production":650000,"distribution":50000,"admin":100000,"finIncome":0,"finCost":100000}}]},{"id":"P17","title":"Ny højteknologisk mozzarellalinje","source":"ARLA","text":"Kunderne ønsker mere specialiserede produkter. Ny teknologi kan give højere kapacitet og mere præcis kvalitet.","lesson":"Ny teknologi kan både øge kapacitet og sænke enhedsomkostninger, men med højere afskrivninger.","choices":[{"label":"Invester i ny teknologi","impacts":{"revenue":2950000,"production":1150000,"distribution":-100000,"admin":250000,"finIncome":0,"finCost":250000}},{"label":"Opgradér eksisterende anlæg gradvist","impacts":{"revenue":1150000,"production":500000,"distribution":0,"admin":100000,"finIncome":0,"finCost":50000}}]},{"id":"P18","title":"Udvid flødeostkapaciteten","source":"ARLA","text":"Efterspørgslen på et produkt vokser globalt, og den nuværende fabrik nærmer sig kapacitetsgrænsen.","lesson":"Kapacitetsudvidelse er attraktiv, når ekstra bruttoresultat kan bære de ekstra faste omkostninger.","choices":[{"label":"Udvid produktionslinjen","impacts":{"revenue":3500000,"production":1950000,"distribution":300000,"admin":200000,"finIncome":0,"finCost":250000}},{"label":"Vent på mere sikker efterspørgsel","impacts":{"revenue":-2750000,"production":-1450000,"distribution":-250000,"admin":-50000,"finIncome":0,"finCost":-100000}}]},{"id":"P19","title":"Nyt stort mejeri","source":"ARLA","text":"Et eksisterende site kan få et nyt stort anlæg, som samler mere produktion og gør processerne mere effektive.","lesson":"Stordrift kan forbedre enhedsomkostninger, men gør virksomheden mere kapitaltung.","choices":[{"label":"Byg det nye anlæg","impacts":{"revenue":5800000,"production":3500000,"distribution":500000,"admin":350000,"finIncome":0,"finCost":650000}},{"label":"Udvid trinvis på nuværende sites","impacts":{"revenue":3750000,"production":2050000,"distribution":350000,"admin":200000,"finIncome":0,"finCost":300000}}]},{"id":"P20","title":"Genindvind varme fra processen","source":"ARLA","text":"Store mængder procesvarme går tabt. Et varmegenvindingsanlæg kan reducere energiforbruget.","lesson":"Energibesparelser sænker produktionsomkostninger, mens investeringen indregnes over levetiden.","choices":[{"label":"Installer varmegenvinding","impacts":{"revenue":150000,"production":-850000,"distribution":0,"admin":50000,"finIncome":0,"finCost":100000}},{"label":"Fortsæt med nuværende energiløsning","impacts":{"revenue":0,"production":750000,"distribution":0,"admin":0,"finIncome":0,"finCost":0}}]},{"id":"P21","title":"Hurtig ramp-up af ny turbine","source":"VESTAS","text":"Ordrebogen er stor, men en ny turbineplatform er kompleks at producere. Hurtig ramp-up kan give ekstra salg og ekstra fejlomkostninger.","lesson":"Hurtig vækst kan presse marginen, hvis læringskurve og kvalitetsproblemer øger produktionsomkostningerne.","choices":[{"label":"Ramp hurtigt op","impacts":{"revenue":3850000,"production":2950000,"distribution":400000,"admin":200000,"finIncome":0,"finCost":0}},{"label":"Ramp gradvist op","impacts":{"revenue":1700000,"production":950000,"distribution":150000,"admin":100000,"finIncome":0,"finCost":0}}]},{"id":"P22","title":"Pris frem for volumen","source":"VESTAS","text":"Markedet er stort, men tidligere kontrakter har haft for lave marginer. Ledelsen kan prioritere bedre pris frem for maksimal volumen.","lesson":"Højere omsætning er ikke altid bedst; prisdisciplin kan forbedre bruttoresultatet.","choices":[{"label":"Prioritér værdi over volumen","impacts":{"revenue":1800000,"production":-500000,"distribution":150000,"admin":50000,"finIncome":0,"finCost":0}},{"label":"Jag maksimal volumen","impacts":{"revenue":3500000,"production":2650000,"distribution":450000,"admin":100000,"finIncome":0,"finCost":0}}]},{"id":"P23","title":"Genopret serviceorganisationen","source":"VESTAS","text":"Serviceforretningen har fået stigende omkostninger og lavere effektivitet. En genopretningsplan kræver ledelses- og driftsinvesteringer.","lesson":"Besparelser kan være kortsigtede, hvis dårlig service skader efterfølgende omsætning og kontrakter.","choices":[{"label":"Invester i recovery-plan","impacts":{"revenue":950000,"production":150000,"distribution":350000,"admin":300000,"finIncome":0,"finCost":0}},{"label":"Skær serviceindsatsen","impacts":{"revenue":-1500000,"production":-100000,"distribution":-400000,"admin":-200000,"finIncome":0,"finCost":0}}]},{"id":"P24","title":"Standardisér flere komponenter","source":"VESTAS","text":"Flere turbinevarianter bruger forskellige komponenter. Standardisering kan give skala, men begrænser kundetilpasning.","lesson":"Standardisering reducerer kompleksitet i produktion og distribution; tilpasning kan øge salgsprisen.","choices":[{"label":"Standardisér platformen","impacts":{"revenue":800000,"production":-1000000,"distribution":-250000,"admin":-250000,"finIncome":0,"finCost":0}},{"label":"Tilpas mere til hver kunde","impacts":{"revenue":1800000,"production":1400000,"distribution":200000,"admin":250000,"finIncome":0,"finCost":0}}]},{"id":"P25","title":"To leverandører til kritiske komponenter","source":"VESTAS","text":"En kritisk komponent har lang leveringstid. Alternativ leverandør vil koste mere, men mindske risikoen for stop.","lesson":"Robusthed har en pris, men kan beskytte omsætning og leveringsevne.","choices":[{"label":"Dual source komponenten","impacts":{"revenue":1350000,"production":600000,"distribution":150000,"admin":100000,"finIncome":0,"finCost":0}},{"label":"Behold én hovedleverandør","impacts":{"revenue":-1250000,"production":-750000,"distribution":100000,"admin":-50000,"finIncome":0,"finCost":0}}]},{"id":"P26","title":"Ny crafting-fabrik i Vietnam","source":"PANDORA","text":"Efterspørgslen vokser, og virksomheden vil sprede produktionen geografisk og øge kapaciteten.","lesson":"Nye sites kan øge kapacitet og robusthed, men giver højere faste omkostninger og finansiering.","choices":[{"label":"Byg ny crafting-fabrik","impacts":{"revenue":5450000,"production":3300000,"distribution":450000,"admin":350000,"finIncome":0,"finCost":600000}},{"label":"Udvid de eksisterende fabrikker","impacts":{"revenue":4000000,"production":2200000,"distribution":350000,"admin":200000,"finIncome":0,"finCost":300000}}]},{"id":"P27","title":"100 % genanvendt sølv og guld","source":"PANDORA","text":"Virksomheden vil bruge genanvendte ædelmetaller som standard. Leverandør- og proceskrav kan være dyrere.","lesson":"Råvarevalg påvirker produktionsomkostninger og kan også ændre kundernes betalingsvillighed.","choices":[{"label":"Skift til genanvendte metaller","impacts":{"revenue":1800000,"production":1100000,"distribution":100000,"admin":50000,"finIncome":0,"finCost":0}},{"label":"Behold nuværende mix","impacts":{"revenue":-250000,"production":-500000,"distribution":0,"admin":0,"finIncome":0,"finCost":0}}]},{"id":"P28","title":"Automatiseret kvalitetsinspektion","source":"PANDORA","text":"Kameraer og billedanalyse kan finde fejl tidligt i processen og reducere kassation senere.","lesson":"Tidlig fejlfinding kan sænke spild, men teknologien giver afskrivninger.","choices":[{"label":"Automatisér inspektionen","impacts":{"revenue":1050000,"production":-1100000,"distribution":-100000,"admin":150000,"finIncome":0,"finCost":250000}},{"label":"Behold manuel inspektion","impacts":{"revenue":1700000,"production":900000,"distribution":-350000,"admin":100000,"finIncome":0,"finCost":0}}]},{"id":"P29","title":"Mere træning til nye håndværkere","source":"PANDORA","text":"En ny fabrik skal hurtigt op i kvalitet. Langere oplæring reducerer produktiviteten i starten.","lesson":"Oplæring er en omkostning nu, men kan sænke fejl og styrke omsætningen gennem kvalitet.","choices":[{"label":"Investér i længere oplæring","impacts":{"revenue":1450000,"production":750000,"distribution":-100000,"admin":150000,"finIncome":0,"finCost":0}},{"label":"Forkort oplæringen","impacts":{"revenue":-750000,"production":-400000,"distribution":200000,"admin":-50000,"finIncome":0,"finCost":0}}]},{"id":"P30","title":"Større lancering af ny kollektion","source":"PANDORA","text":"En ny kollektion kan lanceres globalt på én gang eller testes mere begrænset først.","lesson":"Produktlanceringer påvirker både omsætning, produktion og distributions-/marketingomkostninger.","choices":[{"label":"Lancér globalt","impacts":{"revenue":4950000,"production":2850000,"distribution":1050000,"admin":400000,"finIncome":0,"finCost":0}},{"label":"Start i få markeder","impacts":{"revenue":2250000,"production":1100000,"distribution":400000,"admin":150000,"finIncome":0,"finCost":0}}]},{"id":"P31","title":"Større kommerciel investering","source":"CARLSBERG","text":"Et vigtigt marked er stagneret. Virksomheden kan øge marketing og aktivering omkring brands for at løfte salget.","lesson":"I en funktionsopdelt opgørelse ligger marketing normalt i distributionsomkostninger.","choices":[{"label":"Øg kommercielle investeringer","impacts":{"revenue":2800000,"production":1200000,"distribution":1150000,"admin":100000,"finIncome":0,"finCost":0}},{"label":"Skær kampagnebudgettet","impacts":{"revenue":-1400000,"production":-700000,"distribution":-550000,"admin":0,"finIncome":0,"finCost":0}}]},{"id":"P32","title":"Effektivisér bryggeriet","source":"CARLSBERG","text":"Et bryggeri har højere energi- og bemandingsomkostninger end koncernens bedste anlæg.","lesson":"Driftseffektivitet slår primært igennem på produktionsomkostningerne.","choices":[{"label":"Modernisér bryggeriet","impacts":{"revenue":600000,"production":-1200000,"distribution":-200000,"admin":100000,"finIncome":0,"finCost":200000}},{"label":"Fortsæt med nuværende anlæg","impacts":{"revenue":-400000,"production":700000,"distribution":150000,"admin":0,"finIncome":0,"finCost":0}}]},{"id":"P33","title":"Ny automatiseret pakkelinje","source":"CARLSBERG","text":"Efterspørgslen flytter mellem flasker og dåser. En fleksibel pakkelinje kan øge hastighed og reducere håndtering.","lesson":"Pakkeudstyr kan reducere produktions- og distributionsomkostninger, men giver afskrivninger.","choices":[{"label":"Installer ny pakkelinje","impacts":{"revenue":1250000,"production":-350000,"distribution":-200000,"admin":50000,"finIncome":0,"finCost":200000}},{"label":"Behold manuel fleksibilitet","impacts":{"revenue":200000,"production":750000,"distribution":100000,"admin":0,"finIncome":0,"finCost":0}}]},{"id":"P34","title":"Produktion tættere på markedet","source":"CARLSBERG","text":"Et voksende marked forsynes i dag fra langt væk. Lokal produktion er lidt dyrere, men reducerer transport og leveringstid.","lesson":"Lokalisering kan bytte lav produktionspris for lavere distributionsomkostning og højere service.","choices":[{"label":"Lokaliser produktionen","impacts":{"revenue":1400000,"production":450000,"distribution":-1000000,"admin":150000,"finIncome":0,"finCost":150000}},{"label":"Fortsæt central produktion","impacts":{"revenue":-450000,"production":-650000,"distribution":850000,"admin":-50000,"finIncome":0,"finCost":0}}]},{"id":"P35","title":"Vandbesparende proces","source":"CARLSBERG","text":"Vand og spildevand er en stor del af bryggeriets ressourceforbrug. Nyt procesudstyr kan reducere forbruget.","lesson":"Ressourceeffektivitet reducerer produktionsomkostninger, mens anlægget afskrives.","choices":[{"label":"Invester i vandbesparelse","impacts":{"revenue":200000,"production":-600000,"distribution":0,"admin":50000,"finIncome":0,"finCost":100000}},{"label":"Udskyd projektet","impacts":{"revenue":0,"production":300000,"distribution":0,"admin":0,"finIncome":0,"finCost":0}}]},{"id":"P36","title":"Større planlagt vedligeholdelsesstop","source":"ARLA","text":"Et centralt anlæg trænger til service. Et planlagt stop er dyrt nu, men kan reducere uventede havarier.","lesson":"Forebyggende vedligehold er en byttehandel mellem sikker omkostning nu og risiko for dyr nedetid senere.","choices":[{"label":"Tag det planlagte stop","impacts":{"revenue":1250000,"production":600000,"distribution":-150000,"admin":50000,"finIncome":0,"finCost":0}},{"label":"Kør videre og reparér ved fejl","impacts":{"revenue":-1100000,"production":-250000,"distribution":200000,"admin":-50000,"finIncome":0,"finCost":0}}]},{"id":"P37","title":"Billigere råvarekvalitet","source":"ARLA","text":"Indkøb har fundet en billigere råvarestandard. Den opfylder minimumskravene, men kan give større variation i slutproduktet.","lesson":"Lavere råvarepris kan blive opvejet af kvalitetsproblemer og lavere salgspris.","choices":[{"label":"Vælg billigere input","impacts":{"revenue":-1350000,"production":-950000,"distribution":100000,"admin":0,"finIncome":0,"finCost":0}},{"label":"Betal for premium input","impacts":{"revenue":1600000,"production":900000,"distribution":-50000,"admin":0,"finIncome":0,"finCost":0}}]},{"id":"P38","title":"Premium råvare fra stabil leverandør","source":"PANDORA","text":"En leverandør tilbyder mere stabil materialekvalitet til en højere pris.","lesson":"Materialekvalitet påvirker både produktionsomkostninger, kassation og betalingsvillighed.","choices":[{"label":"Vælg premium input","impacts":{"revenue":1600000,"production":900000,"distribution":-50000,"admin":0,"finIncome":0,"finCost":0}},{"label":"Vælg billigere input","impacts":{"revenue":-1350000,"production":-950000,"distribution":100000,"admin":0,"finIncome":0,"finCost":0}}]},{"id":"P39","title":"Ny nattevagt eller overarbejde","source":"NOVO","text":"En linje skal producere mere de næste måneder. Ledelsen kan ansætte et permanent ekstra skift eller bruge overarbejde.","lesson":"Kapacitetsomkostninger kan være mere eller mindre faste; sammenlign merproduktionens bidrag med ekstra løn.","choices":[{"label":"Opret ekstra skift","impacts":{"revenue":3300000,"production":2150000,"distribution":300000,"admin":200000,"finIncome":0,"finCost":0}},{"label":"Brug overarbejde","impacts":{"revenue":2450000,"production":1900000,"distribution":250000,"admin":50000,"finIncome":0,"finCost":0}}]},{"id":"P40","title":"Make or buy på komponent","source":"VESTAS","text":"En standardkomponent kan produceres internt eller købes hos en specialiseret leverandør.","lesson":"Make-or-buy flytter omkostninger mellem intern produktion og leverandørkøb og kan ændre kvalitet og fleksibilitet.","choices":[{"label":"Producer komponenten selv","impacts":{"revenue":800000,"production":600000,"distribution":-100000,"admin":200000,"finIncome":0,"finCost":150000}},{"label":"Køb komponenten eksternt","impacts":{"revenue":350000,"production":-850000,"distribution":400000,"admin":-100000,"finIncome":0,"finCost":0}}]},{"id":"P41","title":"Nearshore en del af produktionen","source":"LEGO","text":"En delproduktion ligger langt fra slutmarkedet. Flytning tættere på kan gøre produktionen dyrere, men logistikken billigere.","lesson":"Totalomkostningen omfatter både produktions- og distributionsomkostninger.","choices":[{"label":"Flyt tættere på markedet","impacts":{"revenue":950000,"production":400000,"distribution":-850000,"admin":100000,"finIncome":0,"finCost":100000}},{"label":"Behold lavprisproduktionen langt væk","impacts":{"revenue":-400000,"production":-800000,"distribution":850000,"admin":-50000,"finIncome":0,"finCost":0}}]},{"id":"P42","title":"Større sikkerhedslager af kritiske dele","source":"VESTAS","text":"Leveringstiderne er ustabile. Et større sikkerhedslager kan reducere forsinkelser, men øger håndtering og kapitalbinding.","lesson":"Kapitalbinding ligger i balancen, men lagerstyring påvirker også håndtering, mangelomkostninger og omsætning.","choices":[{"label":"Byg større sikkerhedslager","impacts":{"revenue":950000,"production":250000,"distribution":500000,"admin":50000,"finIncome":0,"finCost":100000}},{"label":"Kør med lavt lager","impacts":{"revenue":-400000,"production":-200000,"distribution":-300000,"admin":-50000,"finIncome":0,"finCost":0}}]},{"id":"P43","title":"Just-in-time på materialer","source":"CARLSBERG","text":"Leverandørerne er stabile nok til hyppigere, mindre leverancer. Det kan reducere lager og intern håndtering.","lesson":"JIT kan reducere logistik- og lageromkostninger, men gør produktionen mere følsom over for leveringssvigt.","choices":[{"label":"Gå mere mod JIT","impacts":{"revenue":500000,"production":-500000,"distribution":-200000,"admin":100000,"finIncome":0,"finCost":0}},{"label":"Behold større bufferlagre","impacts":{"revenue":850000,"production":200000,"distribution":500000,"admin":0,"finIncome":0,"finCost":50000}}]},{"id":"P44","title":"Lean-program i fabrikken","source":"ARLA","text":"Processerne har ventetid, ekstra håndtering og omarbejde. Et lean-program kræver træning og ledelsestid.","lesson":"Lean koster implementering, men skal betale sig gennem lavere spild og bedre kapacitetsudnyttelse.","choices":[{"label":"Kør lean-program","impacts":{"revenue":750000,"production":-1150000,"distribution":-250000,"admin":350000,"finIncome":0,"finCost":0}},{"label":"Fortsæt som nu","impacts":{"revenue":0,"production":400000,"distribution":150000,"admin":0,"finIncome":0,"finCost":0}}]},{"id":"P45","title":"Genbrug af produktionsspild","source":"PANDORA","text":"Metalrester og fejlstøbninger kan sorteres og sendes tilbage i processen i højere grad.","lesson":"Mindre spild reducerer materialeforbrug og dermed produktionsomkostninger.","choices":[{"label":"Udbyg genbrug af spild","impacts":{"revenue":300000,"production":-800000,"distribution":0,"admin":100000,"finIncome":0,"finCost":50000}},{"label":"Bortskaf spild som i dag","impacts":{"revenue":0,"production":450000,"distribution":100000,"admin":0,"finIncome":0,"finCost":0}}]},{"id":"P46","title":"Predictive maintenance","source":"VESTAS","text":"Sensorer kan forudsige fejl på kritisk udstyr før havari. Systemet kræver software, sensorer og analysekompetencer.","lesson":"Data kan flytte vedligehold fra akut reparation til planlagt indsats og reducere tabt produktion.","choices":[{"label":"Indfør predictive maintenance","impacts":{"revenue":1150000,"production":-500000,"distribution":-100000,"admin":250000,"finIncome":0,"finCost":100000}},{"label":"Reparér først ved fejl","impacts":{"revenue":-1100000,"production":-250000,"distribution":200000,"admin":-50000,"finIncome":0,"finCost":0}}]},{"id":"P47","title":"Robotter til palletering","source":"CARLSBERG","text":"Færdigvarer palleteres manuelt i et område med gentagne løft. Robotter kan øge hastighed og stabilitet.","lesson":"Automatisering i udgående flow kan især reducere distributionsomkostninger.","choices":[{"label":"Robotisér palletering","impacts":{"revenue":600000,"production":-200000,"distribution":-800000,"admin":50000,"finIncome":0,"finCost":100000}},{"label":"Behold manuel palletering","impacts":{"revenue":150000,"production":50000,"distribution":500000,"admin":0,"finIncome":0,"finCost":0}}]},{"id":"P48","title":"Udfas lavmargin-produkt","source":"ARLA","text":"Et ældre produkt sælger stadig, men bruger kapacitet og har lav bruttoavance.","lesson":"Et produkt kan bidrage positivt uden at være attraktivt, hvis knap kapacitet kan tjene mere på andre varer.","choices":[{"label":"Udfas produktet","impacts":{"revenue":-1750000,"production":-1600000,"distribution":-300000,"admin":-100000,"finIncome":0,"finCost":0}},{"label":"Behold produktet","impacts":{"revenue":1500000,"production":1400000,"distribution":300000,"admin":100000,"finIncome":0,"finCost":0}}]},{"id":"P49","title":"Fjern flaskehals før stor udvidelse","source":"NOVO","text":"Efterspørgslen vokser, men én proces begrænser output. Ledelsen kan optimere flaskehalsen eller bygge bredt ud.","lesson":"Ved knap kapacitet kan en målrettet investering give bedre afkast end en bred udvidelse.","choices":[{"label":"Optimér flaskehalsen først","impacts":{"revenue":2400000,"production":1000000,"distribution":100000,"admin":200000,"finIncome":0,"finCost":50000}},{"label":"Gennemfør fuld kapacitetsudvidelse","impacts":{"revenue":4500000,"production":2800000,"distribution":400000,"admin":250000,"finIncome":0,"finCost":500000}}]},{"id":"P50","title":"Fastlås energiprisen","source":"CARLSBERG","text":"Energipriserne er volatile. En længere kontrakt kan give stabilitet, men koster en præmie.","lesson":"Prisafdækning reducerer udsving i produktionsomkostninger, men har en pris og kan vise sig dyrere end spot.","choices":[{"label":"Afdæk energiprisen","impacts":{"revenue":0,"production":-500000,"distribution":0,"admin":100000,"finIncome":0,"finCost":150000}},{"label":"Køb til spotpris","impacts":{"revenue":0,"production":600000,"distribution":0,"admin":0,"finIncome":0,"finCost":-50000}}]}],"baseTrade":{"revenue":120000000,"cogs":68400000,"external":14200000,"personnel":20800000,"depr":4200000,"finIncome":300000,"finCost":2600000},"baseProduction":{"revenue":160000000,"production":102000000,"distribution":20000000,"admin":18000000,"finIncome":500000,"finCost":4000000}};
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+const state={mode:null, scenarios:[], index:0, accounts:null, previous:null, deltas:null, locked:false, cumulativeDecisionEffect:0, runId:""};
+const BANKRUPTCY_LIMIT=-3000000;
+
+const configs={
+ trade:{
+   label:"Handelsvirksomhed", title:"Artsopdelt resultatopgørelse", base:DATA.baseTrade, pool:DATA.trade,
+   rows:[
+    ["revenue","Nettoomsætning","income"],["cogs","Vareforbrug","cost"],["grossMargin","Bruttoavance","derived"],
+    ["external","Andre eksterne omkostninger","cost"],["grossProfit","Bruttofortjeneste","derived"],
+    ["personnel","Personaleomkostninger","cost"],["depr","Af- og nedskrivninger","cost"],
+    ["ebit","Resultat før finansielle poster","derived"],["finIncome","Finansielle indtægter","income"],
+    ["finCost","Finansielle omkostninger","cost"],["pbt","Resultat før skat","total"]
+   ]
+ },
+ production:{
+   label:"Produktionsvirksomhed", title:"Funktionsopdelt resultatopgørelse", base:DATA.baseProduction, pool:DATA.production,
+   rows:[
+    ["revenue","Nettoomsætning","income"],["production","Produktionsomkostninger","cost"],["grossResult","Bruttoresultat","derived"],
+    ["distribution","Distributionsomkostninger","cost"],["admin","Administrationsomkostninger","cost"],
+    ["ebit","Resultat før finansielle poster","derived"],["finIncome","Finansielle indtægter","income"],
+    ["finCost","Finansielle omkostninger","cost"],["pbt","Resultat før skat","total"]
+   ]
+ }
+};
+
+function calc(a,mode){
+ if(mode==="trade"){
+   const grossMargin=a.revenue-a.cogs;
+   const grossProfit=grossMargin-a.external;
+   const ebit=grossProfit-a.personnel-a.depr;
+   return {...a,grossMargin,grossProfit,ebit,pbt:ebit+a.finIncome-a.finCost};
+ }
+ const grossResult=a.revenue-a.production;
+ const ebit=grossResult-a.distribution-a.admin;
+ return {...a,grossResult,ebit,pbt:ebit+a.finIncome-a.finCost};
+}
+function leafKeys(mode){return mode==="trade"?["revenue","cogs","external","personnel","depr","finIncome","finCost"]:["revenue","production","distribution","admin","finIncome","finCost"];}
+function fmt(n){const sign=n<0?"−":""; const v=Math.abs(n)/1e6; return sign+v.toLocaleString("da-DK",{minimumFractionDigits:1,maximumFractionDigits:1})+" mio.";}
+function fmtValue(key,n,type){return (type==="cost"?"− ":"")+fmt(Math.abs(n));}
+function fmtDelta(n){if(Math.abs(n)<1) return ""; const s=n>0?"+":"−"; return s+(Math.abs(n)/1e6).toLocaleString("da-DK",{minimumFractionDigits:1,maximumFractionDigits:1});}
+function pct(n){return n.toLocaleString("da-DK",{minimumFractionDigits:1,maximumFractionDigits:1})+" %";}
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function runCode(){return Math.random().toString(36).slice(2,6).toUpperCase()+"-"+Math.random().toString(36).slice(2,6).toUpperCase();}
+function safeScrollTop(){
+ try{window.scrollTo({top:0,left:0,behavior:"auto"});}
+ catch(e){try{window.scrollTo(0,0);}catch(_){}}
+}
+function storageGet(key){
+ try{return window.localStorage?window.localStorage.getItem(key):null;}catch(e){return null;}
+}
+function storageSet(key,value){
+ try{if(window.localStorage)window.localStorage.setItem(key,String(value));}catch(e){}
+}
+
+function startGame(mode){
+ state.mode=mode; state.scenarios=shuffle(configs[mode].pool).slice(0,10); state.index=0;
+ state.accounts={...configs[mode].base}; state.previous=null; state.deltas=null; state.locked=false;
+ state.cumulativeDecisionEffect=0; state.runId=runCode();
+ document.body.classList.add("playing");
+ $("#startScreen").classList.remove("active"); $("#gameScreen").classList.add("active");
+ $("#modeKicker").textContent=configs[mode].label; $("#gameTitle").textContent=configs[mode].title;
+ $("#statementType").textContent=configs[mode].label+" · "+configs[mode].title;
+ renderScenario(); renderStatement();
+ safeScrollTop();
+}
+
+function renderScenario(){
+ const sc=state.scenarios[state.index]; state.locked=false; state.deltas=null; state.previous=null;
+ $("#progressText").textContent=(state.index+1)+" / 10";
+ $("#progressBar").style.width=((state.index)/10*100)+"%";
+ $("#scenarioNo").textContent="Scenarie "+(state.index+1);
+ $("#companyPill").textContent="Inspireret af "+sc.source;
+ $("#scenarioTitle").textContent=sc.title; $("#scenarioText").textContent=sc.text;
+ const choices=$("#choices"); choices.innerHTML="";
+ sc.choices.forEach((c,i)=>{
+   const b=document.createElement("button"); b.className="choice-btn"; b.textContent=c.label;
+   b.addEventListener("click",()=>choose(i,b)); choices.appendChild(b);
+ });
+ $("#feedback").classList.remove("show"); $("#nextBtn").classList.remove("show");
+ $("#nextBtn").textContent=state.index===9?"Se slutresultat →":"Næste scenarie →";
+ renderStatement();
+}
+
+function choose(choiceIndex,button){
+ if(state.locked)return; state.locked=true;
+ const sc=state.scenarios[state.index], choice=sc.choices[choiceIndex];
+ state.previous=calc(state.accounts,state.mode);
+ const beforePbt=state.previous.pbt;
+ for(const k of leafKeys(state.mode)) state.accounts[k]+=choice.impacts[k]||0;
+ const after=calc(state.accounts,state.mode);
+ state.deltas={};
+ for(const [k] of configs[state.mode].rows) state.deltas[k]=(after[k]||0)-(state.previous[k]||0);
+ const effect=after.pbt-beforePbt; state.cumulativeDecisionEffect+=effect;
+ $$(".choice-btn").forEach(b=>b.disabled=true); button.classList.add("selected");
+ $("#feedbackText").textContent=sc.lesson;
+ const src=DATA.sources[sc.source]; if(src){ $("#sourceLink").href=src.url; $("#sourceLink").textContent="Inspirationskilde: "+src.name+" ↗"; }
+ $("#feedback").classList.add("show"); $("#nextBtn").classList.add("show");
+ $("#progressBar").style.width=((state.index+1)/10*100)+"%";
+ renderStatement();
+ if(state.cumulativeDecisionEffect<=BANKRUPTCY_LIMIT){
+   setTimeout(()=>$("#bankruptModal").classList.add("show"),500);
+ }
+}
+
+function effectClass(type,delta){
+ if(Math.abs(delta)<1)return "neutral";
+ const improvement= type==="cost" ? delta<0 : delta>0;
+ return improvement?"good":"bad";
+}
+
+function renderStatement(){
+ const cfg=configs[state.mode||"trade"]; const a=calc(state.accounts||cfg.base,state.mode||"trade");
+ const rows=$("#statementRows"); rows.innerHTML="";
+ cfg.rows.forEach(([k,label,type])=>{
+   const r=document.createElement("div"); r.className="row "+(type==="derived"?"derived ":"")+(type==="total"?"total ":"");
+   const lab=document.createElement("div"); lab.className="row-label"; lab.textContent=label;
+   const val=document.createElement("div"); val.className="row-value";
+   const value=document.createElement("div"); value.textContent=fmtValue(k,a[k],type); val.appendChild(value);
+   const d=document.createElement("span"); d.className="delta";
+   const delta=state.deltas?state.deltas[k]:0;
+   if(state.deltas && Math.abs(delta)>=1){
+     const cls=effectClass(type,delta); d.classList.add(cls); d.textContent=fmtDelta(delta)+" mio.";
+     r.classList.add(cls==="good"?"flash-good":"flash-bad");
+   }
+   val.appendChild(d); r.append(lab,val); rows.appendChild(r);
+ });
+ $("#liveScore").textContent=fmt(a.pbt);
+ const metrics=$("#metrics"); metrics.innerHTML="";
+ let items=[];
+ if(state.mode==="trade"){
+   items=[
+    ["Bruttoavanceprocent", a.revenue?((a.revenue-a.cogs)/a.revenue*100):0],
+    ["Overskudsgrad", a.revenue?(a.ebit/a.revenue*100):0],
+    ["Resultatmargin", a.revenue?(a.pbt/a.revenue*100):0]
+   ];
+ } else {
+   items=[
+    ["Bruttoresultatprocent", a.revenue?((a.revenue-a.production)/a.revenue*100):0],
+    ["Overskudsgrad", a.revenue?(a.ebit/a.revenue*100):0],
+    ["Resultatmargin", a.revenue?(a.pbt/a.revenue*100):0]
+   ];
+ }
+ items.forEach(([label,v])=>{const el=document.createElement("div");el.className="metric";el.innerHTML="<span>"+label+"</span><strong>"+pct(v)+"</strong>";metrics.appendChild(el);});
+}
+
+function nextScenario(){
+ if(!state.locked)return;
+ if(state.index>=9){finishGame();return;}
+ state.index++; renderScenario();
+}
+function finishGame(){
+ const a=calc(state.accounts,state.mode), base=calc(configs[state.mode].base,state.mode);
+ const key="bundlinjen-high-"+state.mode; const old=Number(storageGet(key)||"-Infinity");
+ const best=Math.max(old,a.pbt); storageSet(key,best);
+ $("#endType").textContent=configs[state.mode].label+" · "+configs[state.mode].title;
+ $("#finalScore").textContent=fmt(a.pbt); $("#highScore").textContent=fmt(best);
+ const diff=a.pbt-base.pbt; $("#changeFromBase").textContent=(diff>=0?"+":"")+fmt(diff);
+ $("#runId").textContent="Runde "+state.runId+" · Score = overskud før skat";
+ $("#endModal").classList.add("show");
+}
+function resetSameMode(){$("#endModal").classList.remove("show");$("#bankruptModal").classList.remove("show");startGame(state.mode);}
+function goStart(){$("#endModal").classList.remove("show");$("#bankruptModal").classList.remove("show");$("#gameScreen").classList.remove("active");$("#startScreen").classList.add("active");document.body.classList.remove("playing");safeScrollTop();}
+
+function renderSources(){
+ const core=[
+  ["UVM – Læreplan Virksomhedsøkonomi A (hhx)","https://uvm.dk/media/mf3bti44/virksomhedsoekonomi-a-hhx-august-2017.pdf"],
+  ["UVM – Vejledning Virksomhedsøkonomi A 2024","https://uvm.dk/media/5grddwft/241002-vejledning-virksomhedsoekonomi-a-hhx-2024.pdf"],
+  ["Systime – Formelsamling til Virksomhedsøkonomi","https://virksomhed.systime.dk/fileadmin/indhold/Download/Formelsamling_Voe_2023.pdf"]
+ ];
+ const list=$("#sourceList"); list.innerHTML="";
+ [...core,...Object.values(DATA.sources).map(s=>[s.name,s.url])].forEach(([name,url])=>{
+   const d=document.createElement("div");d.className="source-item";d.innerHTML='<a target="_blank" rel="noopener" href="'+url+'">'+name+' ↗</a>';list.appendChild(d);
+ });
+}
+
+function validateData(){
+ console.assert(DATA.trade.length===50,"Der skal være 50 handelsscenarier");
+ console.assert(DATA.production.length===50,"Der skal være 50 produktionsscenarier");
+ const checks=[["trade",DATA.trade],["production",DATA.production]];
+ for(const [mode,pool] of checks){
+   const ids=new Set();
+   pool.forEach(sc=>{
+     console.assert(!ids.has(sc.id),"Dublet-id",sc.id); ids.add(sc.id);
+     console.assert(sc.choices.length===2,"To valg kræves",sc.id);
+     sc.choices.forEach(ch=>{
+       const before=calc(configs[mode].base,mode); const temp={...configs[mode].base};
+       leafKeys(mode).forEach(k=>temp[k]+=ch.impacts[k]||0);
+       const after=calc(temp,mode); console.assert(Number.isFinite(after.pbt),"Ugyldig effekt",sc.id);
+       console.assert(Math.abs(after.pbt-before.pbt)<=4000000,"En enkelt case er for dominerende",sc.id);
+     });
+   });
+ }
+}
+
+function init(){
+  $$(".mode-card").forEach(function(b){b.onclick=function(){startGame(b.dataset.mode);};});
+  $("#nextBtn").onclick=nextScenario;
+  $("#infoBtn").onclick=function(){$("#infoModal").classList.add("show");};
+  $("#closeInfo").onclick=function(){$("#infoModal").classList.remove("show");};
+  $("#infoModal").onclick=function(e){if(e.target.id==="infoModal")e.currentTarget.classList.remove("show");};
+  $("#playAgain").onclick=resetSameMode;
+  $("#changeMode").onclick=goStart;
+  $("#restartBankrupt").onclick=resetSameMode;
+  document.onkeydown=function(e){if(e.key==="Escape"){$("#infoModal").classList.remove("show");}};
+  renderSources();
+  validateData();
+}
+
+if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",init,{once:true});}
+else{init();}
+})();
+</script>
+</body>
+</html>
