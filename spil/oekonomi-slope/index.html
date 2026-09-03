@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Økonomi Slope – HHX</title>
+<style>
+  :root{
+    --bg:#050816;
+    --panel:rgba(5,8,22,.82);
+    --text:#f5f7ff;
+    --muted:#b9c2d8;
+    --accent:#7cf7d4;
+    --wall:#8a5cff;
+    --danger:#ff5576;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--text)}
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block;background:radial-gradient(circle at 50% 30%,#101a3d 0,#050816 60%,#02030a 100%)}
+  #hud{
+    position:fixed;left:50%;top:18px;transform:translateX(-50%);
+    z-index:4;display:flex;gap:14px;align-items:center;justify-content:center;
+    background:rgba(3,7,20,.68);border:1px solid rgba(255,255,255,.12);
+    border-radius:16px;padding:10px 16px;backdrop-filter:blur(8px);
+    box-shadow:0 10px 30px rgba(0,0,0,.24);
+    opacity:0;pointer-events:none;transition:opacity .2s ease;
+  }
+  #hud.visible{opacity:1}
+  .stat{min-width:92px;text-align:center}
+  .stat b{display:block;font-size:22px;line-height:1.05}
+  .stat span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-top:4px}
+  .sep{width:1px;height:35px;background:rgba(255,255,255,.13)}
+  #overlay{
+    position:fixed;inset:0;z-index:5;display:grid;place-items:center;
+    background:linear-gradient(to bottom,rgba(3,5,15,.12),rgba(3,5,15,.48));
+  }
+  #overlay.hidden{display:none}
+  .card{
+    width:min(620px,calc(100vw - 32px));padding:30px 30px 26px;
+    border:1px solid rgba(255,255,255,.16);border-radius:26px;
+    background:var(--panel);backdrop-filter:blur(12px);
+    box-shadow:0 30px 80px rgba(0,0,0,.45);text-align:center;
+  }
+  .eyebrow{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:800}
+  h1{font-size:clamp(38px,7vw,72px);line-height:.92;margin:10px 0 14px;letter-spacing:-.05em}
+  .lead{font-size:17px;line-height:1.55;color:#d8def0;margin:0 auto 18px;max-width:500px}
+  .rules{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0 22px;text-align:left
+  }
+  .rule{padding:13px 14px;border-radius:14px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);font-size:14px;line-height:1.35}
+  .rule b{display:block;margin-bottom:3px}
+  button{
+    appearance:none;border:0;border-radius:15px;padding:14px 26px;
+    font-size:17px;font-weight:900;cursor:pointer;color:#071018;background:var(--accent);
+    box-shadow:0 10px 28px rgba(124,247,212,.22);
+    transition:transform .12s ease,filter .12s ease;
+  }
+  button:hover{transform:translateY(-1px);filter:brightness(1.05)}
+  button:active{transform:translateY(1px)}
+  .controls{margin-top:15px;font-size:13px;color:var(--muted)}
+  .key{display:inline-block;min-width:28px;padding:4px 7px;margin:0 2px;border-radius:7px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:white;font-weight:700}
+  #toast{
+    position:fixed;left:50%;top:92px;transform:translate(-50%,-8px);
+    z-index:6;padding:10px 15px;border-radius:12px;background:rgba(4,9,23,.86);
+    border:1px solid rgba(255,255,255,.13);font-weight:800;
+    opacity:0;pointer-events:none;transition:.22s ease;
+  }
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+  #touch{
+    position:fixed;z-index:4;left:0;right:0;bottom:18px;
+    display:none;justify-content:space-between;padding:0 18px;pointer-events:none
+  }
+  .touchgroup{display:flex;gap:10px;pointer-events:auto}
+  .touchbtn{
+    width:64px;height:64px;border-radius:50%;display:grid;place-items:center;
+    border:1px solid rgba(255,255,255,.18);background:rgba(3,7,20,.58);
+    color:white;font-size:24px;font-weight:900;user-select:none;-webkit-user-select:none;
+    backdrop-filter:blur(7px);touch-action:none
+  }
+  .touchbtn.jump{width:78px;height:78px;font-size:13px;letter-spacing:.08em}
+  @media (max-width:800px),(pointer:coarse){
+    #touch{display:flex}
+    .rules{grid-template-columns:1fr}
+    .card{padding:24px 20px 22px}
+    .controls{display:none}
+    #hud{top:10px;gap:8px;padding:8px 10px}
+    .stat{min-width:74px}.stat b{font-size:18px}
+  }
+</style>
+</head>
+<body>
+<canvas id="game" aria-label="Økonomi Slope spil"></canvas>
+
+<div id="hud">
+  <div class="stat"><b id="score">0</b><span>Point</span></div>
+  <div class="sep"></div>
+  <div class="stat"><b id="sections">0</b><span>Sektioner</span></div>
+  <div class="sep"></div>
+  <div class="stat"><b id="speed">1.0×</b><span>Hastighed</span></div>
+</div>
+
+<div id="toast"></div>
+
+<div id="overlay">
+  <div class="card" id="startCard">
+    <div class="eyebrow">HHX · læringsspil</div>
+    <h1>ØKONOMI<br>SLOPE</h1>
+    <p class="lead">Hold bolden på den snoede bane. Kør <b>igennem økonomiske fagbegreber</b> for bonuspoint – og <b>hop over ord, der ikke er fagbegreber</b>.</p>
+    <div class="rules">
+      <div class="rule"><b>Fagbegreb</b>Kør gennem muren: +1 point.</div>
+      <div class="rule"><b>Ikke fagbegreb</b>Hop over muren. Rammer du den, er spillet slut.</div>
+    </div>
+    <button id="startBtn">SPIL NU</button>
+    <div class="controls"><span class="key">A</span>/<span class="key">D</span> eller <span class="key">←</span>/<span class="key">→</span> styrer · <span class="key">SPACE</span>/<span class="key">↑</span> hopper</div>
+  </div>
+</div>
+
+<div id="touch">
+  <div class="touchgroup">
+    <div class="touchbtn" data-key="left">←</div>
+    <div class="touchbtn" data-key="right">→</div>
+  </div>
+  <div class="touchgroup">
+    <div class="touchbtn jump" data-key="jump">HOP</div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d', { alpha: false });
+const overlay = document.getElementById('overlay');
+const startBtn = document.getElementById('startBtn');
+const startCard = document.getElementById('startCard');
+const hud = document.getElementById('hud');
+const scoreEl = document.getElementById('score');
+const sectionsEl = document.getElementById('sections');
+const speedEl = document.getElementById('speed');
+const toast = document.getElementById('toast');
+
+let W = innerWidth, H = innerHeight, DPR = Math.min(devicePixelRatio || 1, 2);
+function resize(){
+  W = innerWidth; H = innerHeight; DPR = Math.min(devicePixelRatio || 1, 2);
+  canvas.width = Math.round(W * DPR);
+  canvas.height = Math.round(H * DPR);
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+addEventListener('resize', resize);
+resize();
+
+// ---------- HHX word pools ----------
+// Fagbegreber fra centrale områder i Afsætning, Virksomhedsøkonomi og International Økonomi.
+const TERMS = [
+  'Segmentering','Positionering','Målgruppe','Marketingmix','Købsadfærd',
+  'Markedsandel','Distributionskanal','Brancheanalyse','Konkurrencestrategi','Priselasticitet',
+  'Kernekompetence','Værdikæde','SWOT-analyse','Differentiering','Markedsvækst',
+  'Dækningsbidrag','Dækningsgrad','Kapacitetsomkostninger','Afskrivning','Soliditetsgrad',
+  'Likviditetsgrad','Afkastningsgrad','Overskudsgrad','Nulpunktsomsætning','Aktivernes omsætningshastighed',
+  'Resultatopgørelse','Balance','Variable omkostninger','Kalkulationsrente','Investeringskalkule',
+  'Betalingsbalance','Handelsbalance','Inflation','Konjunktur','Finanspolitik',
+  'Pengepolitik','Valutareserve','Devaluering','Revaluering','Komparative fordele',
+  'Strukturpolitik','Arbejdsproduktivitet','Bruttonationalprodukt','Multiplikatoreffekt','Valutakurs'
+];
+
+// Bevidst plausible, abstrakte ord – men ikke standardfagbegreber i de tre økonomiske HHX-fag.
+const DECOYS = [
+  'Nuancering','Beskaffenhed','Omstændighed','Betragtning','Tilkendegivelse',
+  'Vedholdenhed','Modsætningsforhold','Erkendelse','Sammenfald','Indramning',
+  'Helhedsblik','Fremdrift','Modspil','Tvetydighed','Forudseenhed',
+  'Samhørighed','Eftertanke','Indlevelse','Virkekraft','Omhu',
+  'Omdrejningspunkt','Følgevirkning','Tidsånd','Rækkevidde','Særpræg',
+  'Overensstemmelse','Uforudsigelighed','Fortolkningsrum','Grundighed','Overlevering',
+  'Besindighed','Forehavende','Fremtoning','Efterklang','Tilhørsforhold',
+  'Opmærksomhed','Betragtelighed','Tålmodighed','Påpasselighed','Sammenstød',
+  'Mellemled','Tilskikkelse','Anskuelse','Udfoldelse','Mådelighed'
+];
+
+const keys = {left:false,right:false,jump:false};
+let state = 'menu';
+let lastTime = performance.now();
+let distance = 0;
+let playerX = 0;
+let lateralV = 0;
+let jumpY = 0;
+let jumpV = 0;
+let completedSections = 0;
+let bonusTerms = 0;
+let obstacles = [];
+let nextObstacleZ = 240;
+let usedTermBag = [], usedDecoyBag = [];
+let shake = 0;
+let flash = 0;
+let lastSectionShown = 0;
+let highScore = Number(localStorage.getItem('economySlopeHighScore') || 0);
+
+const SECTION = 115;
+const ROAD_HALF = 3.85;
+const BALL_R = 0.36;
+const BASE_SPEED = 34;
+const SPEED_STEP = 3.2;
+const MAX_VIEW = 390;
+const WALL_HEIGHT = 1.3;
+const SAFE_JUMP = 0.92;
+
+function trackCenter(z){
+  // Flere samtidige kurver giver både lange sving, S-kurver og markante retningsskift.
+  return Math.sin(z*0.0082)*5.0
+       + Math.sin(z*0.0175 + 1.15)*2.75
+       + Math.sin(z*0.0031 + 2.2)*4.2
+       + Math.sin(z*0.031)*0.75;
+}
+function trackElevation(z){
+  return Math.sin(z*0.0062)*1.55 + Math.sin(z*0.0135 + .7)*.55;
+}
+function currentSpeed(){
+  return BASE_SPEED + Math.floor(completedSections / 5) * SPEED_STEP;
+}
+function speedMultiplier(){
+  return currentSpeed() / BASE_SPEED;
+}
+function score(){
+  return completedSections + bonusTerms;
+}
+function pickFromBag(source, bagName){
+  let bag = bagName === 'term' ? usedTermBag : usedDecoyBag;
+  if (!bag.length){
+    bag = source.map((_,i)=>i);
+    for(let i=bag.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [bag[i],bag[j]]=[bag[j],bag[i]];
+    }
+    if (bagName === 'term') usedTermBag = bag;
+    else usedDecoyBag = bag;
+  }
+  const idx = bag.pop();
+  return source[idx];
+}
+function spawnObstacle(z){
+  const isTerm = Math.random() < 0.5;
+  const word = isTerm ? pickFromBag(TERMS,'term') : pickFromBag(DECOYS,'decoy');
+  obstacles.push({z,word,isTerm,awarded:false,ghost:false,checked:false});
+}
+function ensureObstacles(){
+  while(nextObstacleZ < distance + MAX_VIEW + 120){
+    spawnObstacle(nextObstacleZ);
+    // God afstand: spilleren kan læse ordet og får et bredt timingvindue til hop.
+    nextObstacleZ += 175 + Math.random()*105;
+  }
+  obstacles = obstacles.filter(o => o.z > distance - 28);
+}
+
+function resetGame(){
+  distance = 0;
+  playerX = trackCenter(0);
+  lateralV = 0;
+  jumpY = 0;
+  jumpV = 0;
+  completedSections = 0;
+  bonusTerms = 0;
+  obstacles = [];
+  nextObstacleZ = 235;
+  usedTermBag = [];
+  usedDecoyBag = [];
+  shake = 0;
+  flash = 0;
+  lastSectionShown = 0;
+  ensureObstacles();
+  updateHUD();
+}
+function startGame(){
+  resetGame();
+  state = 'playing';
+  overlay.classList.add('hidden');
+  hud.classList.add('visible');
+}
+function endGame(reason){
+  if(state !== 'playing') return;
+  state = 'gameover';
+  shake = 16;
+  const total = score();
+  if(total > highScore){
+    highScore = total;
+    localStorage.setItem('economySlopeHighScore', String(highScore));
+  }
+  hud.classList.remove('visible');
+  overlay.classList.remove('hidden');
+  startCard.innerHTML = `
+    <div class="eyebrow">${reason}</div>
+    <h1 style="font-size:clamp(52px,10vw,100px);margin-bottom:8px">${total} POINT</h1>
+    <p class="lead" style="margin-bottom:14px">Sektioner: <b>${completedSections}</b> · Fagbegreber fanget: <b>${bonusTerms}</b></p>
+    <div class="rules" style="grid-template-columns:1fr 1fr">
+      <div class="rule"><b>Bedste score</b>${highScore} point</div>
+      <div class="rule"><b>Sluthastighed</b>${speedMultiplier().toFixed(1)}×</div>
+    </div>
+    <button id="restartBtn">SPIL IGEN</button>
+    <div class="controls">Resultatet står centralt, så skærmen er klar til et screenshot.</div>
+  `;
+  document.getElementById('restartBtn').addEventListener('click', startGame);
+}
+
+function showToast(text){
+  toast.textContent = text;
+  toast.classList.add('show');
+  clearTimeout(showToast.t);
+  showToast.t = setTimeout(()=>toast.classList.remove('show'),700);
+}
+function updateHUD(){
+  scoreEl.textContent = score();
+  sectionsEl.textContent = completedSections;
+  speedEl.textContent = speedMultiplier().toFixed(1) + '×';
+}
+
+function jump(){
+  if(state !== 'playing') return;
+  if(jumpY <= 0.02){
+    jumpV = 13.2;
+    jumpY = 0.01;
+  }
+}
+function setKey(name,val){
+  if(name==='jump' && val && !keys.jump) jump();
+  keys[name]=val;
+}
+addEventListener('keydown', e=>{
+  if(['ArrowLeft','ArrowRight','ArrowUp','Space','KeyA','KeyD','KeyW'].includes(e.code)) e.preventDefault();
+  if(e.code==='ArrowLeft'||e.code==='KeyA') setKey('left',true);
+  if(e.code==='ArrowRight'||e.code==='KeyD') setKey('right',true);
+  if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW') setKey('jump',true);
+  if((e.code==='Enter'||e.code==='Space') && state==='menu') startGame();
+});
+addEventListener('keyup', e=>{
+  if(e.code==='ArrowLeft'||e.code==='KeyA') setKey('left',false);
+  if(e.code==='ArrowRight'||e.code==='KeyD') setKey('right',false);
+  if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW') setKey('jump',false);
+});
+document.querySelectorAll('.touchbtn').forEach(btn=>{
+  const k=btn.dataset.key;
+  const on=e=>{e.preventDefault();setKey(k,true)};
+  const off=e=>{e.preventDefault();setKey(k,false)};
+  btn.addEventListener('pointerdown',on);
+  btn.addEventListener('pointerup',off);
+  btn.addEventListener('pointercancel',off);
+  btn.addEventListener('pointerleave',off);
+});
+startBtn.addEventListener('click', startGame);
+
+function update(dt){
+  if(state !== 'playing') return;
+
+  completedSections = Math.floor(distance / SECTION);
+  const speedNow = currentSpeed();
+  distance += speedNow * dt;
+
+  const input = (keys.right?1:0) - (keys.left?1:0);
+  const steerAccel = 20.5;
+  lateralV += input * steerAccel * dt;
+  lateralV *= Math.exp(-3.05 * dt);
+  lateralV = Math.max(-8.6,Math.min(8.6,lateralV));
+  playerX += lateralV * dt;
+
+  if(jumpY > 0 || jumpV > 0){
+    jumpV -= 21.5 * dt;
+    jumpY += jumpV * dt;
+    if(jumpY <= 0){
+      jumpY = 0;
+      jumpV = 0;
+    }
+  }
+
+  completedSections = Math.floor(distance / SECTION);
+  if(completedSections > lastSectionShown){
+    lastSectionShown = completedSections;
+    if(completedSections > 0 && completedSections % 5 === 0){
+      showToast('HASTIGHED OP · ' + speedMultiplier().toFixed(1) + '×');
+    }
+  }
+
+  ensureObstacles();
+
+  const roadCenterNow = trackCenter(distance);
+  const offRoad = Math.abs(playerX - roadCenterNow) > ROAD_HALF - BALL_R*0.45;
+  if(offRoad && jumpY < 0.15){
+    endGame('DU FALDT AF BANEN');
+    return;
+  }
+
+  for(const o of obstacles){
+    const rel = o.z - distance;
+    if(rel < 4.2 && rel > -4.8){
+      // Muren fylder hele kørebanen: valget er bevidst "igennem eller over".
+      if(!o.checked && rel <= 1.6){
+        o.checked = true;
+        if(jumpY < SAFE_JUMP){
+          if(o.isTerm){
+            o.ghost = true;
+            if(!o.awarded){
+              o.awarded = true;
+              bonusTerms++;
+              flash = 1;
+              showToast('+1 FAGBEGREB');
+            }
+          }else{
+            endGame('IKKE ET FAGBEGREB');
+            return;
+          }
+        }
+      }
+    }
+  }
+  updateHUD();
+  flash *= Math.exp(-7*dt);
+}
+
+function project(zRel, worldX, worldY=0){
+  const horizon = H * 0.24;
+  const bottom = H * 0.94;
+  const p = 1 / (1 + Math.max(0,zRel) / 60);
+  const nearScale = Math.min(W / 14.2, 86);
+  const centerRef = trackCenter(distance);
+  const elevRef = trackElevation(distance);
+  const sx = W/2 + (worldX-centerRef) * nearScale * p;
+  const sy = horizon + (bottom-horizon) * p - (worldY-elevRef) * 42 * p;
+  return {x:sx,y:sy,p,scale:nearScale*p};
+}
+
+function roadPoint(zRel){
+  const wz = distance + zRel;
+  const elev = trackElevation(wz);
+  const c = project(zRel, trackCenter(wz), elev);
+  const half = ROAD_HALF * c.scale;
+  return {x:c.x,y:c.y,half,p:c.p};
+}
+
+function drawBackground(t){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#07102a');
+  g.addColorStop(.46,'#0a0d24');
+  g.addColorStop(1,'#02030a');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  // Stjerner / fartspunkter
+  ctx.globalAlpha=.6;
+  for(let i=0;i<70;i++){
+    const seed = (i*92821)%997;
+    const x = (seed/997)*W;
+    const y = ((i*47)%113)/113*H*.58;
+    const r = (i%7===0)?1.4:.7;
+    ctx.fillStyle='white';
+    ctx.fillRect(x,y,r,r);
+  }
+  ctx.globalAlpha=1;
+
+  const horizonY=H*.24;
+  const glow=ctx.createRadialGradient(W/2,horizonY,0,W/2,horizonY,W*.42);
+  glow.addColorStop(0,'rgba(98,92,255,.20)');
+  glow.addColorStop(1,'rgba(98,92,255,0)');
+  ctx.fillStyle=glow;ctx.fillRect(0,0,W,H*.65);
+}
+
+function drawRoad(){
+  const step = 5;
+  let prev = roadPoint(MAX_VIEW);
+  for(let z=MAX_VIEW-step; z>=0; z-=step){
+    const cur = roadPoint(z);
+    const worldZ = distance + z;
+    const section = Math.floor(worldZ / SECTION);
+    ctx.beginPath();
+    ctx.moveTo(prev.x-prev.half,prev.y);
+    ctx.lineTo(prev.x+prev.half,prev.y);
+    ctx.lineTo(cur.x+cur.half,cur.y);
+    ctx.lineTo(cur.x-cur.half,cur.y);
+    ctx.closePath();
+    ctx.fillStyle = section%2===0 ? '#172454' : '#1a2a60';
+    ctx.fill();
+
+    // svag midterglød giver dybde uden at hjælpe med ordvalget
+    ctx.strokeStyle='rgba(124,247,212,.08)';
+    ctx.lineWidth=Math.max(1,cur.p*2.5);
+    ctx.beginPath();ctx.moveTo(prev.x,prev.y);ctx.lineTo(cur.x,cur.y);ctx.stroke();
+
+    // tydelige neonkanter
+    ctx.strokeStyle='rgba(124,247,212,.78)';
+    ctx.lineWidth=Math.max(1,cur.p*3);
+    ctx.beginPath();
+    ctx.moveTo(prev.x-prev.half,prev.y);ctx.lineTo(cur.x-cur.half,cur.y);
+    ctx.moveTo(prev.x+prev.half,prev.y);ctx.lineTo(cur.x+cur.half,cur.y);
+    ctx.stroke();
+
+    prev = cur;
+  }
+
+  // Sektionsstreger
+  const first = Math.ceil(distance/SECTION)*SECTION;
+  for(let wz=first; wz<distance+MAX_VIEW; wz+=SECTION){
+    const z=wz-distance;
+    const rp=roadPoint(z);
+    ctx.strokeStyle='rgba(255,255,255,.28)';
+    ctx.lineWidth=Math.max(1,3*rp.p);
+    ctx.beginPath();ctx.moveTo(rp.x-rp.half*.9,rp.y);ctx.lineTo(rp.x+rp.half*.9,rp.y);ctx.stroke();
+  }
+}
+
+function fitFont(text,maxWidth,baseSize,minSize=10){
+  let size=baseSize;
+  ctx.font=`900 ${size}px Segoe UI,Arial,sans-serif`;
+  while(size>minSize && ctx.measureText(text).width>maxWidth){
+    size-=1;
+    ctx.font=`900 ${size}px Segoe UI,Arial,sans-serif`;
+  }
+  return size;
+}
+
+function drawObstacle(o){
+  const z=o.z-distance;
+  if(z< -8 || z>MAX_VIEW) return;
+  const wz=o.z;
+  const elev=trackElevation(wz);
+  const c=project(Math.max(0,z),trackCenter(wz),elev);
+  const road=roadPoint(Math.max(0,z));
+  const w=road.half*1.82;
+  const h=Math.max(18,145*c.p);
+  const ghost = o.ghost && z<4.5 && z>-7;
+  const alpha = ghost ? .18 : .96;
+
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  ctx.fillStyle='#8a5cff';
+  ctx.strokeStyle='#b8a0ff';
+  ctx.lineWidth=Math.max(1.5,3.5*c.p);
+
+  // En tydelig, afgrænset mur med samme farve for alle ord.
+  ctx.beginPath();
+  ctx.rect(c.x-w/2,c.y-h,w,h);
+  ctx.fill();
+  ctx.stroke();
+
+  // Bundkant fremhæver præcist hvor muren starter.
+  ctx.strokeStyle='rgba(255,255,255,.82)';
+  ctx.lineWidth=Math.max(1,2.2*c.p);
+  ctx.beginPath();ctx.moveTo(c.x-w/2,c.y);ctx.lineTo(c.x+w/2,c.y);ctx.stroke();
+
+  const fontSize=fitFont(o.word,w*.86,Math.max(12,34*c.p),9);
+  ctx.font=`900 ${fontSize}px Segoe UI,Arial,sans-serif`;
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillStyle='#ffffff';
+  ctx.shadowColor='rgba(0,0,0,.55)';
+  ctx.shadowBlur=5*c.p;
+  ctx.fillText(o.word,c.x,c.y-h*.52);
+  ctx.restore();
+}
+
+function drawBall(){
+  const nearScale=Math.min(W/14.2,86);
+  const trackNow=trackCenter(distance);
+  const px=W/2+(playerX-trackNow)*nearScale;
+  const ground=project(0,trackNow,trackElevation(distance));
+  const py=ground.y - jumpY*nearScale*.72 - 18;
+  const r=Math.max(13,Math.min(23,W/45));
+
+  ctx.save();
+  ctx.translate(px,py);
+
+  // skygge på banen
+  ctx.save();
+  ctx.translate(0, jumpY*nearScale*.72 + 18);
+  ctx.scale(1,0.34);
+  ctx.globalAlpha=Math.max(.08,.34-jumpY*.05);
+  ctx.fillStyle='#000';
+  ctx.beginPath();ctx.arc(0,0,r*1.05,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+
+  const g=ctx.createRadialGradient(-r*.35,-r*.45,2,0,0,r*1.2);
+  g.addColorStop(0,'#ffffff');
+  g.addColorStop(.18,'#b7fff0');
+  g.addColorStop(.55,'#33e5bc');
+  g.addColorStop(1,'#087b72');
+  ctx.fillStyle=g;
+  ctx.shadowColor='rgba(124,247,212,.8)';
+  ctx.shadowBlur=18;
+  ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();
+
+  // Rotationsstribe viser fart
+  const rot=distance*.07;
+  ctx.rotate(rot);
+  ctx.strokeStyle='rgba(4,34,38,.55)';
+  ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(0,0,r*.63,-1.15,1.15);ctx.stroke();
+  ctx.restore();
+}
+
+function drawSpeedLines(){
+  if(state!=='playing') return;
+  const m=speedMultiplier();
+  if(m<1.12) return;
+  ctx.save();
+  ctx.globalAlpha=Math.min(.2,(m-1)*.12);
+  ctx.strokeStyle='white';
+  ctx.lineWidth=1;
+  for(let i=0;i<22;i++){
+    const x=((i*83+distance*1.7)%W);
+    const y=H*.28+((i*59+distance*2.6)%(H*.62));
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+(x-W/2)*.035,y+18*m);ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function render(t){
+  ctx.save();
+  if(shake>0){
+    const mag=shake;
+    ctx.translate((Math.random()-.5)*mag,(Math.random()-.5)*mag);
+    shake*=.86;
+  }
+  drawBackground(t);
+  drawRoad();
+
+  // Tegn fjerne mure først.
+  const visible=obstacles.filter(o=>o.z-distance>-8 && o.z-distance<MAX_VIEW)
+    .sort((a,b)=>b.z-a.z);
+  for(const o of visible) drawObstacle(o);
+
+  drawBall();
+  drawSpeedLines();
+
+  if(flash>.02){
+    ctx.globalAlpha=flash*.16;
+    ctx.fillStyle='#7cf7d4';
+    ctx.fillRect(0,0,W,H);
+    ctx.globalAlpha=1;
+  }
+  ctx.restore();
+
+  if(state==='menu'){
+    // Bane skal være tydelig allerede før start.
+    // Men den står stille, så brugeren kan se den snoede form.
+  }
+}
+
+function loop(now){
+  let dt=Math.min(.033,(now-lastTime)/1000);
+  lastTime=now;
+  update(dt);
+  render(now/1000);
+  requestAnimationFrame(loop);
+}
+
+// Vis en tydelig bane bag startskærmen.
+resetGame();
+state='menu';
+requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>
